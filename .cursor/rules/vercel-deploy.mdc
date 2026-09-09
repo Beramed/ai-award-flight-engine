@@ -1,0 +1,10 @@
+---
+description: Deploy Vercel ao concluir no Award Engine
+alwaysApply: true
+---
+
+No projeto **ai-award-flight-engine**, ao concluir uma ação:
+
+1. Rodar `npx vercel --prod --yes`.
+2. Informar a URL de produção do Vercel na resposta final.
+3. Não esperar o usuário pedir o link.
