@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const NAV = [
   { href: "/", label: "Busca", hint: "Motor" },
@@ -12,6 +13,9 @@ const NAV = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const current = mounted ? pathname : "";
 
   return (
     <div className="app-shell">
@@ -30,7 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link
               key={item.href}
               href={item.href}
-              className={pathname === item.href ? "nav-link active" : "nav-link"}
+              className={current === item.href ? "nav-link active" : "nav-link"}
             >
               {item.label}
             </Link>
@@ -47,7 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             key={item.href}
             href={item.href}
-            className={pathname === item.href ? "m-link active" : "m-link"}
+            className={current === item.href ? "m-link active" : "m-link"}
           >
             <b>{item.label}</b>
             <span>{item.hint}</span>
