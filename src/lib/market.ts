@@ -1,4 +1,4 @@
-import { getAirport } from "./airports";
+import { getAirport, haversineKm } from "./airports";
 import { DYNAMIC_PROGRAMS } from "./tables";
 import type { Cabin, CashQuote, DynamicMilesQuote, TripSearch } from "./types";
 
@@ -35,15 +35,13 @@ function pairKey(origin: string, destination: string) {
 }
 
 export function estimateDistanceKm(origin: string, destination: string) {
+  const from = getAirport(origin);
+  const to = getAirport(destination);
+  if (from && to) return Math.round(haversineKm(from, to));
   const direct = DISTANCE_KM[pairKey(origin, destination)];
   if (direct) return direct;
   const reverse = DISTANCE_KM[pairKey(destination, origin)];
   if (reverse) return reverse;
-  const from = getAirport(origin);
-  const to = getAirport(destination);
-  if (from && to && from.zoneIds.some((zone) => to.zoneIds.includes(zone))) return 2800;
-  if (from?.zoneIds.includes("SA2") && to?.zoneIds.includes("NA")) return 7400;
-  if (from?.zoneIds.includes("SA2") && to?.zoneIds.includes("EU")) return 8600;
   return 6500;
 }
 

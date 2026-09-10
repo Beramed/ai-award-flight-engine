@@ -20,7 +20,7 @@ export function buildBookingKit(option: AwardOption, search: TripSearch): Bookin
   ].join(" ");
 
   const whatsappText = encodeURIComponent(
-    `Award Engine · emissão pendente de aprovação\n${search.origin}→${search.destination} ${option.outboundDate}/${option.inboundDate}\n${option.program} · ${option.cabin} · classe ${option.fareClass}\n${option.miles.toLocaleString("pt-BR")} milhas + US$ ${option.taxesUsd.toFixed(2)} taxas\nCPM ${option.cpm.toFixed(3)} USD\nPortal: ${programPortalUrl(option.program)}`,
+    `Voando com Tati · emissão pendente de aprovação\n${search.origin}→${search.destination} ${option.outboundDate}/${option.inboundDate}\n${option.program} · ${option.cabin} · classe ${option.fareClass}\n${option.miles.toLocaleString("pt-BR")} milhas + US$ ${option.taxesUsd.toFixed(2)} taxas\nCPM ${option.cpm.toFixed(3)} USD\nPortal: ${programPortalUrl(option.program)}`,
   );
 
   const checklist = [

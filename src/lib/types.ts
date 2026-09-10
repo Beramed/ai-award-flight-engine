@@ -1,5 +1,5 @@
 export type Cabin = "ECONOMY" | "BUSINESS" | "FIRST";
-export type Alliance = "Oneworld" | "Star Alliance" | "SkyTeam";
+export type Alliance = "Oneworld" | "Star Alliance" | "SkyTeam" | "Independent";
 export type TableType = "FIXED" | "DYNAMIC";
 export type Decision = "SELECT" | "ALTERNATIVE" | "UNAVAILABLE";
 

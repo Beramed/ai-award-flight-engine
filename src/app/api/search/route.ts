@@ -40,7 +40,9 @@ function parseWallets(body: Record<string, unknown>): Wallet[] {
       if (!item || typeof item !== "object") return null;
       const wallet = item as Record<string, unknown>;
       const alliance =
-        wallet.alliance === "Star Alliance" || wallet.alliance === "SkyTeam"
+        wallet.alliance === "Star Alliance" ||
+        wallet.alliance === "SkyTeam" ||
+        wallet.alliance === "Independent"
           ? wallet.alliance
           : "Oneworld";
       return {

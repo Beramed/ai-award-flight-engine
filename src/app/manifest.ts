@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Award Engine",
-    short_name: "Award Engine",
-    description: "Compare tabela fixa e dinâmica e prepare a emissão de passagens com milhas.",
+    name: "Voando com Tati",
+    short_name: "Voando Tati",
+    description: "Busque destinos pelo nome do lugar e compare passagens com milhas.",
     start_url: "/",
     display: "standalone",
     background_color: "#081018",

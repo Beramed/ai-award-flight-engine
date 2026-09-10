@@ -22,13 +22,13 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Award Engine — passagens com milhas",
+  title: "Voando com Tati — passagens com milhas",
   description:
-    "Compare tabela fixa e dinâmica, calcule CPM e prepare a emissão de award com aprovação humana.",
-  applicationName: "Award Engine",
+    "Busque o destino pelo nome do lugar, veja aeroportos próximos e compare milhas para emitir com aprovação humana.",
+  applicationName: "Voando com Tati",
   appleWebApp: {
     capable: true,
-    title: "Award Engine",
+    title: "Voando com Tati",
     statusBarStyle: "black-translucent",
   },
 };

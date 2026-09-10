@@ -12,7 +12,10 @@ export function WalletEditor() {
 
   useEffect(() => {
     const stored = localStorage.getItem(WALLET_KEY);
-    if (stored) setWallets(JSON.parse(stored) as Wallet[]);
+    if (!stored) return;
+    const parsed = JSON.parse(stored) as Wallet[];
+    const byName = new Map(parsed.map((wallet) => [wallet.programName, wallet]));
+    setWallets(DEFAULT_WALLETS.map((wallet) => byName.get(wallet.programName) ?? wallet));
   }, []);
 
   function update(index: number, milesBalance: number) {

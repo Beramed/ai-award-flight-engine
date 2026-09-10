@@ -25,7 +25,11 @@ export function SearchExperience() {
     const storedSearch = localStorage.getItem(SEARCH_KEY);
     const storedWallets = localStorage.getItem(WALLET_KEY);
     if (storedSearch) setSearch(JSON.parse(storedSearch) as TripSearch);
-    if (storedWallets) setWallets(JSON.parse(storedWallets) as Wallet[]);
+    if (storedWallets) {
+      const parsed = JSON.parse(storedWallets) as Wallet[];
+      const byName = new Map(parsed.map((wallet) => [wallet.programName, wallet]));
+      setWallets(DEFAULT_WALLETS.map((wallet) => byName.get(wallet.programName) ?? wallet));
+    }
   }, []);
 
   async function runSearch() {
@@ -83,7 +87,7 @@ export function SearchExperience() {
           </>
         ) : (
           <section className="panel idle">
-            <h2>Pronto para comparar</h2>
+            <h2>Pronto para voar</h2>
             <p>
               Carteiras ativas: {wallets.map((wallet) => `${wallet.programName} ${wallet.milesBalance.toLocaleString("pt-BR")}`).join(" · ")}
             </p>

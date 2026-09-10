@@ -1,6 +1,6 @@
 "use client";
 
-import { AIRPORTS } from "@/lib/airports";
+import { PlaceSearch } from "@/components/PlaceSearch";
 import { DEFAULT_SEARCH } from "@/lib/engine";
 import type { Cabin, TripSearch } from "@/lib/types";
 
@@ -37,38 +37,28 @@ export function SearchForm({ value, onChange, onSubmit, loading }: Props) {
       }}
     >
       <div className="search-head">
-        <h1>Comparar e emitir com milhas</h1>
+        <h1>Voando com Tati</h1>
         <p>
-          O motor consulta a matriz fixa, estima a tabela dinâmica e o preço em dinheiro, calcula o
-          CPM e escolhe a melhor emissão. Pagamento só depois da sua aprovação.
+          Digite o nome do lugar. A gente sugere os aeroportos mais próximos e os trajetos a partir
+          da sua origem, compara milhas e prepara a emissão.
         </p>
       </div>
 
-      <div className="grid-2">
-        <label>
-          Origem
-          <select value={value.origin} onChange={(event) => patch({ origin: event.target.value })}>
-            {AIRPORTS.map((airport) => (
-              <option key={airport.code} value={airport.code}>
-                {airport.code} · {airport.city}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Destino
-          <select
-            value={value.destination}
-            onChange={(event) => patch({ destination: event.target.value })}
-          >
-            {AIRPORTS.map((airport) => (
-              <option key={airport.code} value={airport.code}>
-                {airport.code} · {airport.city}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <PlaceSearch
+        label="Origem"
+        value={value.origin}
+        onChange={(origin) => patch({ origin })}
+        placeholder="Cidade, bairro ou aeroporto"
+      />
+
+      <PlaceSearch
+        label="Destino"
+        value={value.destination}
+        originCode={value.origin}
+        showRoutes
+        onChange={(destination) => patch({ destination })}
+        placeholder="Ex.: Disney, Lisboa, Manhattan"
+      />
 
       <label className="check">
         <input
@@ -180,10 +170,10 @@ export function SearchForm({ value, onChange, onSubmit, loading }: Props) {
 
       <div className="actions">
         <button type="submit" className="primary" disabled={loading}>
-          {loading ? "Calculando rotas…" : "Rodar motor de decisão"}
+          {loading ? "Calculando rotas…" : "Buscar passagens"}
         </button>
         <button type="button" className="ghost" onClick={() => onChange(DEFAULT_SEARCH)}>
-          GRU → JFK exemplo
+          São Paulo → Nova York
         </button>
       </div>
     </form>

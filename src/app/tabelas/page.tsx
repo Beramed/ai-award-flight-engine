@@ -1,39 +1,57 @@
 import { FIXED_TABLES } from "@/lib/tables";
 
+function miles(value?: number) {
+  return typeof value === "number" ? `${value.toLocaleString("pt-BR")} milhas` : "—";
+}
+
 export default function TabelasPage() {
   return (
     <div className="stack">
       <section className="panel">
         <div className="panel-head">
-          <h1>Tabelas fixas</h1>
-          <p>Matriz award usada pelo motor. Classes tarifárias: T/U/Z (Oneworld) e X/I (Star Alliance / Iberia).</p>
+          <h1>Tabelas de milhas</h1>
+          <p>
+            Os valores de econômica, executiva e primeira são <strong>milhas reais do programa</strong>{" "}
+            (ida, por passageiro). A última coluna é <strong>taxa em dólares americanos (USD)</strong>,
+            paga em dinheiro no resgate — não é milha.
+          </p>
+        </div>
+        <div className="legend">
+          <p>
+            <b>Milhas</b> = custo do prêmio no programa (AAdvantage, Smiles, Skywards etc.).
+          </p>
+          <p>
+            <b>US$</b> = taxas de embarque/combustível estimadas em dólar. CPM usa o preço da
+            passagem em dinheiro também em USD.
+          </p>
         </div>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Programa</th>
-                <th>Zonas</th>
-                <th>Econômica</th>
-                <th>Executiva</th>
-                <th>Primeira</th>
-                <th>Taxas</th>
+                <th>Programa / cia</th>
+                <th>Rota</th>
+                <th>Econômica (milhas)</th>
+                <th>Executiva (milhas)</th>
+                <th>Primeira (milhas)</th>
+                <th>Taxas (USD)</th>
               </tr>
             </thead>
             <tbody>
-              {FIXED_TABLES.map((table) => (
-                <tr key={`${table.program}-${table.originZone}-${table.destinationZone}`}>
+              {FIXED_TABLES.map((row) => (
+                <tr key={`${row.program}-${row.partnerAirline}-${row.originZone}-${row.destinationZone}`}>
                   <td>
-                    <strong>{table.program}</strong>
-                    <div>{table.partnerAirline}</div>
+                    <strong>{row.program}</strong>
+                    <div>{row.partnerAirline}</div>
+                    <small>{row.alliance}</small>
                   </td>
                   <td>
-                    {table.originZone} → {table.destinationZone}
+                    {row.originZone} → {row.destinationZone}
                   </td>
-                  <td>{(table.fixedRatesMiles.economy_off_peak ?? table.fixedRatesMiles.economy)?.toLocaleString("pt-BR") ?? "—"}</td>
-                  <td>{(table.fixedRatesMiles.business_off_peak ?? table.fixedRatesMiles.business)?.toLocaleString("pt-BR") ?? "—"}</td>
-                  <td>{table.fixedRatesMiles.first?.toLocaleString("pt-BR") ?? "—"}</td>
-                  <td>US$ {table.taxesEstimatedUsd.toFixed(0)}</td>
+                  <td>{miles(row.fixedRatesMiles.economy_off_peak ?? row.fixedRatesMiles.economy)}</td>
+                  <td>{miles(row.fixedRatesMiles.business_off_peak ?? row.fixedRatesMiles.business)}</td>
+                  <td>{miles(row.fixedRatesMiles.first)}</td>
+                  <td>US$ {row.taxesEstimatedUsd.toFixed(0)}</td>
                 </tr>
               ))}
             </tbody>
