@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         ) : null}
         <p className="live-pill">
-          {user ? (
+          {mounted && user ? (
             <>
               <span />
               {user.preferredName}
