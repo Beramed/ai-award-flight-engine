@@ -3,10 +3,8 @@ class_name HUD
 
 const PANEL_SCALE := 0.24
 const PANEL_POS := Vector2(4, 3)
-const BAR_POS := Vector2(168, 65)
-const BAR_SIZE := Vector2(278, 16)
-const PORTRAIT_POS := Vector2(10, 12)
-const PORTRAIT_SIZE := Vector2(150, 152)
+const PORTRAIT_POS := Vector2(8, 10)
+const PORTRAIT_SIZE := Vector2(154, 156)
 
 @onready var root: Control = $Root
 @onready var go_label: Label = $Root/GO
@@ -75,25 +73,38 @@ func _build() -> void:
 	portrait.size = PORTRAIT_SIZE * PANEL_SCALE
 	root.add_child(portrait)
 
-	var bar_origin := PANEL_POS + BAR_POS * PANEL_SCALE
-	var hp_h := maxf(5.0, BAR_SIZE.y * PANEL_SCALE)
-	var bar_w := BAR_SIZE.x * PANEL_SCALE
+	var panel_w := 482.0 * PANEL_SCALE
+	var col_x := PANEL_POS.x + portrait.size.x + 4.0
+	var col_w := maxf(72.0, PANEL_POS.x + panel_w - col_x - 3.0)
+	var cover := ColorRect.new()
+	cover.color = Color(0.10, 0.30, 0.44, 1)
+	cover.position = Vector2(col_x - 2.0, PANEL_POS.y + 2.0)
+	cover.size = Vector2(col_w + 5.0, 62.0)
+	cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(cover)
+
+	var player_lbl := _hud_label(Vector2(col_x, PANEL_POS.y + 2.0), Vector2(col_w, 10), 8)
+	player_lbl.text = "PLAYER 1"
+	player_lbl.add_theme_color_override("font_color", Color(0.95, 0.78, 0.22, 1))
+
+	var hp_pos := Vector2(col_x, PANEL_POS.y + 13.0)
+	var hp_h := 6.0
 	var track := ColorRect.new()
 	track.color = Color(0.02, 0.02, 0.02, 1)
-	track.position = bar_origin
-	track.size = Vector2(bar_w, hp_h)
+	track.position = hp_pos
+	track.size = Vector2(col_w, hp_h)
 	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(track)
 
 	hp_fill = ColorRect.new()
 	hp_fill.color = Color(0.92, 0.42, 0.12, 1)
-	hp_fill.position = bar_origin
-	hp_fill.size = Vector2(bar_w, hp_h)
+	hp_fill.position = hp_pos
+	hp_fill.size = Vector2(col_w, hp_h)
 	hp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(hp_fill)
 
-	var rage_pos := Vector2(bar_origin.x, bar_origin.y + hp_h + 1.0)
-	var rage_size := Vector2(bar_w, 8.0)
+	var rage_pos := Vector2(col_x, hp_pos.y + hp_h + 2.0)
+	var rage_size := Vector2(col_w, 7.0)
 	rage_back = ColorRect.new()
 	rage_back.color = Color(0.05, 0.08, 0.16, 0.95)
 	rage_back.position = rage_pos
@@ -108,15 +119,16 @@ func _build() -> void:
 	rage_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(rage_fill)
 
-	rage_lbl = _hud_label(rage_pos, rage_size, 7)
+	rage_lbl = _hud_label(rage_pos, rage_size, 6)
 	rage_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rage_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	rage_lbl.text = "RAGE"
+	rage_lbl.clip_text = true
 	rage_lbl.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0, 1))
 
-	var text_y := rage_pos.y + rage_size.y + 2.0
-	lives_lbl = _hud_label(Vector2(bar_origin.x, text_y), Vector2(bar_w, 10), 7)
-	score_lbl = _hud_label(Vector2(bar_origin.x, text_y + 10.0), Vector2(bar_w, 10), 7)
+	var text_y := rage_pos.y + rage_size.y + 6.0
+	lives_lbl = _hud_label(Vector2(col_x, text_y), Vector2(col_w, 9), 7)
+	score_lbl = _hud_label(Vector2(col_x, text_y + 10.0), Vector2(col_w, 9), 7)
 
 	var weapons_bg := ColorRect.new()
 	weapons_bg.color = Color(0.02, 0.04, 0.08, 0.55)
@@ -153,7 +165,7 @@ func _hud_label(pos: Vector2, size: Vector2, font_size: int) -> Label:
 	lbl.add_theme_font_size_override("font_size", font_size)
 	lbl.add_theme_color_override("font_color", Color(0.95, 0.95, 0.9, 1))
 	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-	lbl.add_theme_constant_override("outline_size", 4)
+	lbl.add_theme_constant_override("outline_size", 2)
 	root.add_child(lbl)
 	return lbl
 
@@ -186,7 +198,7 @@ func _make_weapon_slot(id: String, icon_name: String) -> Control:
 
 func _on_hp(value: int, maximum: int) -> void:
 	var ratio := 0.0 if maximum <= 0 else clampf(float(value) / float(maximum), 0.0, 1.0)
-	hp_fill.size.x = BAR_SIZE.x * PANEL_SCALE * ratio
+	hp_fill.size.x = rage_back.size.x * ratio
 	hp_fill.color = Color(0.92, 0.42, 0.12, 1) if value > 1 else Color(0.85, 0.15, 0.1, 1)
 
 
