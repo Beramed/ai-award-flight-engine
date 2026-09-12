@@ -15,6 +15,8 @@ var aim := Vector2.RIGHT
 var invuln := 0.0
 var shoot_cd := 0.0
 var grenade_cd := 0.0
+var grenade_t := 0.0
+var grenade_spawn_armed := false
 var melee_t := 0.0
 var rage_t := 0.0
 var crouching := false
@@ -67,6 +69,11 @@ func _physics_process(delta: float) -> void:
 	shoot_cd = max(0.0, shoot_cd - delta)
 	grenade_cd = max(0.0, grenade_cd - delta)
 	melee_t = max(0.0, melee_t - delta)
+	if grenade_t > 0.0:
+		grenade_t = max(0.0, grenade_t - delta)
+		if grenade_spawn_armed and grenade_t <= 0.28:
+			grenade_spawn_armed = false
+			_spawn_grenade()
 	if rage_t > 0.0:
 		rage_t -= delta
 		modulate = Color(1.2, 0.7, 0.7)
@@ -117,10 +124,12 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_clamp_camera_left()
 	muzzle.position = Vector2(36 * facing, -20 if not crouching else -14)
-	if aim.y < -0.4:
-		muzzle.position = Vector2(12 * facing, -36)
 	if not is_on_floor():
 		muzzle.position = Vector2(36 * facing, -22)
+	if aim.y < -0.85:
+		muzzle.position = Vector2(2 * facing, -42)
+	elif aim.y < -0.25:
+		muzzle.position = Vector2(24 * facing, -34)
 	$Melee/CollisionShape2D.position.x = 24 * facing
 	$Melee/CollisionShape2D.position.y = -8
 	if OS.get_environment("KIKO_CAPTURE") != "":
@@ -183,22 +192,45 @@ func _run_capture() -> void:
 		anim.play("melee_doze")
 	elif _capture_frames == 106:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_melee_shotgun.png")
+		GameState.current_weapon = "fuzil"
+		aim = Vector2(0, -1)
+		facing = 1
+		anim.flip_h = false
+	elif _capture_frames < 122:
+		aim = Vector2(0, -1)
+		_shoot()
+		anim.play("shoot_up")
+		muzzle.position = Vector2(2, -42)
+	elif _capture_frames == 122:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_up.png")
+		aim = Vector2(1, -1).normalized()
+	elif _capture_frames < 138:
+		aim = Vector2(1, -1).normalized()
+		_shoot()
+		anim.play("shoot_diag")
+		muzzle.position = Vector2(24, -34)
+	elif _capture_frames == 138:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_diag.png")
+		GameState.grenades = max(GameState.grenades, 2)
 		_throw_grenade()
-	elif _capture_frames == 118:
+	elif _capture_frames == 155:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_grenade_throw.png")
+	elif _capture_frames == 200:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_grenade_boom.png")
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_grenade.png")
 		GameState.rage = 80.0
 		GameState.rage_changed.emit(GameState.rage, GameState.MAX_RAGE)
 		invuln = 0.0
 		take_hit(1, Vector2(-40, -60))
-	elif _capture_frames == 128:
+	elif _capture_frames == 210:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_hurt.png")
 		invuln = 0.0
 		take_hit(1, Vector2(-20, -40))
-	elif _capture_frames == 140:
+	elif _capture_frames == 222:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_hurt2.png")
 		invuln = 0.0
 		take_hit(1, Vector2(-10, -20))
-	elif _capture_frames == 175:
+	elif _capture_frames == 260:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_death.png")
 
 
@@ -223,7 +255,7 @@ func _update_aim() -> void:
 
 
 func _try_attack() -> void:
-	if melee_t > 0.0:
+	if melee_t > 0.0 or grenade_t > 0.0:
 		return
 	if rage_t > 0.0 or _enemy_in_melee():
 		_do_melee()
@@ -273,6 +305,10 @@ func _shoot() -> void:
 
 
 func _shoot_anim_name() -> String:
+	if aim.y < -0.7:
+		return "shoot_up"
+	if aim.y < -0.25:
+		return "shoot_diag"
 	var weapon := GameState.current_weapon
 	var air := not is_on_floor()
 	if air:
@@ -285,8 +321,6 @@ func _shoot_anim_name() -> String:
 		return "shoot_fuzil"
 	if weapon == "doze":
 		return "shoot_doze"
-	if aim.y < -0.5:
-		return "shoot_up"
 	return "shoot"
 
 
@@ -319,6 +353,10 @@ func _spawn_muzzle_fx() -> void:
 	flash.centered = true
 	flash.position = muzzle.position + Vector2(10 * facing, 0)
 	flash.flip_h = facing < 0
+	if abs(aim.y) > 0.2:
+		flash.position = muzzle.position
+		flash.rotation = aim.angle()
+		flash.flip_h = false
 	match GameState.current_weapon:
 		"doze":
 			flash.scale = Vector2(0.42, 0.42)
@@ -344,14 +382,21 @@ func _spawn_casing() -> void:
 
 
 func _throw_grenade() -> void:
-	if grenade_cd > 0.0:
+	if grenade_cd > 0.0 or grenade_t > 0.0 or melee_t > 0.0:
 		return
 	if not GameState.consume_grenade():
 		return
-	grenade_cd = 0.55
+	grenade_cd = 0.72
+	grenade_t = 0.48
+	grenade_spawn_armed = true
+	anim.play("throw_grenade")
+	anim.flip_h = facing < 0
+
+
+func _spawn_grenade() -> void:
 	var g := preload("res://scenes/grenade.tscn").instantiate()
-	g.global_position = global_position + Vector2(facing * 10, -10)
-	g.setup(Vector2(facing * 190, -230))
+	g.global_position = global_position + Vector2(facing * 14, -18)
+	g.setup(Vector2(facing * 196, -248))
 	get_tree().current_scene.add_child(g)
 
 
@@ -401,13 +446,21 @@ func _die() -> void:
 
 
 func _play_anim(x: float) -> void:
-	if melee_t > 0.0 or (anim.animation in ["hurt", "death"] and anim.is_playing()):
+	if grenade_t > 0.0 or melee_t > 0.0 or (anim.animation in ["hurt", "death"] and anim.is_playing()):
 		return
 	if rage_t > 0.0 and Input.is_action_pressed(_ia("shoot")):
 		anim.play("rage")
 		return
 	if Input.is_action_pressed(_ia("shoot")):
 		anim.play(_shoot_anim_name())
+	elif aim.y < -0.7:
+		anim.play("shoot_up")
+		anim.frame = 0
+		anim.pause()
+	elif aim.y < -0.25:
+		anim.play("shoot_diag")
+		anim.frame = 0
+		anim.pause()
 	elif not is_on_floor():
 		anim.play("jump")
 	elif crouching:
