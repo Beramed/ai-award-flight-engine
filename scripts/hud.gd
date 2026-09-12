@@ -1,11 +1,12 @@
 extends CanvasLayer
 class_name HUD
 
-const PANEL_SCALE := 0.48
+const PANEL_SCALE := 0.24
 const PANEL_POS := Vector2(4, 3)
-const SRC_SIZE := Vector2(482, 178)
 const BAR_POS := Vector2(168, 65)
 const BAR_SIZE := Vector2(278, 16)
+const PORTRAIT_POS := Vector2(10, 12)
+const PORTRAIT_SIZE := Vector2(150, 152)
 
 @onready var root: Control = $Root
 @onready var go_label: Label = $Root/GO
@@ -18,6 +19,7 @@ var score_lbl: Label
 var rage_back: ColorRect
 var rage_fill: ColorRect
 var rage_lbl: Label
+var portrait: TextureRect
 var weapon_slots: Array[Control] = []
 
 
@@ -31,11 +33,13 @@ func _ready() -> void:
 	GameState.score_changed.connect(_on_score)
 	GameState.rage_changed.connect(_on_rage)
 	GameState.lives_changed.connect(_on_lives)
+	GameState.portrait_changed.connect(_on_portrait)
 	go_label.visible = false
 	_on_hp(GameState.hp, GameState.MAX_HP)
 	_on_rage(GameState.rage, GameState.MAX_RAGE)
 	_on_lives(GameState.lives)
 	_on_score(GameState.score)
+	_on_portrait(GameState.portrait)
 	_paint_weapons()
 
 
@@ -61,29 +65,37 @@ func _build() -> void:
 	panel.scale = Vector2(PANEL_SCALE, PANEL_SCALE)
 	root.add_child(panel)
 
+	portrait = TextureRect.new()
+	portrait.texture = SpriteLib.ui("portrait_kiko")
+	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	portrait.position = PANEL_POS + PORTRAIT_POS * PANEL_SCALE
+	portrait.size = PORTRAIT_SIZE * PANEL_SCALE
+	root.add_child(portrait)
+
 	var bar_origin := PANEL_POS + BAR_POS * PANEL_SCALE
+	var hp_h := maxf(5.0, BAR_SIZE.y * PANEL_SCALE)
+	var bar_w := BAR_SIZE.x * PANEL_SCALE
 	var track := ColorRect.new()
 	track.color = Color(0.02, 0.02, 0.02, 1)
 	track.position = bar_origin
-	track.size = BAR_SIZE * PANEL_SCALE
+	track.size = Vector2(bar_w, hp_h)
 	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(track)
 
 	hp_fill = ColorRect.new()
 	hp_fill.color = Color(0.92, 0.42, 0.12, 1)
 	hp_fill.position = bar_origin
-	hp_fill.size = BAR_SIZE * PANEL_SCALE
+	hp_fill.size = Vector2(bar_w, hp_h)
 	hp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(hp_fill)
 
-	lives_lbl = _hud_label(PANEL_POS + Vector2(168, 100) * PANEL_SCALE, Vector2(140, 16), 10)
-	score_lbl = _hud_label(PANEL_POS + Vector2(168, 132) * PANEL_SCALE, Vector2(140, 16), 10)
-
-	var panel_h := SRC_SIZE.y * PANEL_SCALE
-	var rage_pos := Vector2(bar_origin.x, PANEL_POS.y + panel_h + 3.0)
-	var rage_size := Vector2(BAR_SIZE.x * PANEL_SCALE, 12.0)
+	var rage_pos := Vector2(bar_origin.x, bar_origin.y + hp_h + 1.0)
+	var rage_size := Vector2(bar_w, 8.0)
 	rage_back = ColorRect.new()
-	rage_back.color = Color(0.05, 0.08, 0.16, 0.92)
+	rage_back.color = Color(0.05, 0.08, 0.16, 0.95)
 	rage_back.position = rage_pos
 	rage_back.size = rage_size
 	rage_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -96,11 +108,15 @@ func _build() -> void:
 	rage_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(rage_fill)
 
-	rage_lbl = _hud_label(rage_pos, rage_size, 10)
+	rage_lbl = _hud_label(rage_pos, rage_size, 7)
 	rage_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rage_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	rage_lbl.text = "RAGE"
 	rage_lbl.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0, 1))
+
+	var text_y := rage_pos.y + rage_size.y + 2.0
+	lives_lbl = _hud_label(Vector2(bar_origin.x, text_y), Vector2(bar_w, 10), 7)
+	score_lbl = _hud_label(Vector2(bar_origin.x, text_y + 10.0), Vector2(bar_w, 10), 7)
 
 	var weapons_bg := ColorRect.new()
 	weapons_bg.color = Color(0.02, 0.04, 0.08, 0.55)
@@ -172,6 +188,15 @@ func _on_hp(value: int, maximum: int) -> void:
 	var ratio := 0.0 if maximum <= 0 else clampf(float(value) / float(maximum), 0.0, 1.0)
 	hp_fill.size.x = BAR_SIZE.x * PANEL_SCALE * ratio
 	hp_fill.color = Color(0.92, 0.42, 0.12, 1) if value > 1 else Color(0.85, 0.15, 0.1, 1)
+
+
+func _on_portrait(kind: String) -> void:
+	var tex_name := "portrait_kiko"
+	if kind == "hurt":
+		tex_name = "portrait_kiko_hurt"
+	elif kind == "rage":
+		tex_name = "portrait_kiko_rage"
+	portrait.texture = SpriteLib.ui(tex_name)
 
 
 func _on_lives(value: int) -> void:

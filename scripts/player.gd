@@ -4,6 +4,7 @@ class_name PlayerKiko
 const SPEED := 118.0
 const JUMP_VELOCITY := -332.0
 const GRAVITY := 820.0
+const BODY_SCALE := 0.7
 
 signal died
 
@@ -40,6 +41,8 @@ func _ready() -> void:
 	anim.sprite_frames = SpriteLib.kiko_frames()
 	anim.play("idle")
 	anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	anim.centered = true
+	scale = Vector2(BODY_SCALE, BODY_SCALE)
 
 
 func _ia(action: String) -> String:
@@ -59,12 +62,18 @@ func _physics_process(delta: float) -> void:
 		return
 
 	invuln = max(0.0, invuln - delta)
+	if invuln <= 0.0 and GameState.portrait == "hurt" and rage_t <= 0.0:
+		GameState.set_portrait("base")
 	shoot_cd = max(0.0, shoot_cd - delta)
 	grenade_cd = max(0.0, grenade_cd - delta)
 	melee_t = max(0.0, melee_t - delta)
 	if rage_t > 0.0:
 		rage_t -= delta
 		modulate = Color(1.2, 0.7, 0.7)
+		if rage_t <= 0.0:
+			modulate = Color(1, 1, 1)
+			if GameState.portrait == "rage":
+				GameState.set_portrait("base")
 	else:
 		modulate = Color(1, 1, 1)
 
@@ -131,6 +140,12 @@ func _run_capture() -> void:
 	elif _capture_frames == 16:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_arcade.png")
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_walk.png")
+	elif _capture_frames < 22:
+		GameState.set_portrait("rage")
+		anim.play("rage")
+	elif _capture_frames == 22:
+		get_viewport().get_texture().get_image().save_png(cap + "/hud_rage_portrait.png")
+		GameState.set_portrait("base")
 	elif _capture_frames < 34:
 		GameState.current_weapon = "pistola"
 		_shoot()
@@ -349,6 +364,7 @@ func _try_rage() -> void:
 	GameState.rage_changed.emit(0.0, GameState.MAX_RAGE)
 	rage_t = 10.0
 	invuln = 10.0
+	GameState.set_portrait("rage")
 
 
 func take_hit(_amount: int = 1, knock := Vector2.ZERO) -> void:
@@ -361,6 +377,7 @@ func take_hit(_amount: int = 1, knock := Vector2.ZERO) -> void:
 		_die()
 	else:
 		anim.play("hurt")
+		GameState.set_portrait("hurt")
 
 
 func _die() -> void:

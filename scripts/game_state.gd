@@ -7,6 +7,7 @@ signal coins_changed(value: int)
 signal score_changed(value: int)
 signal rage_changed(value: float, maximum: float)
 signal ammo_changed(id: String, value: int)
+signal portrait_changed(kind: String)
 
 enum Difficulty { EASY, MEDIUM, HARD }
 
@@ -26,6 +27,7 @@ var hp: int = MAX_HP
 var coins: int = 0
 var score: int = 0
 var rage: float = 0.0
+var portrait := "base"
 var has_vest: bool = false
 var current_weapon: String = "pistola"
 var grenades: int = 8
@@ -81,6 +83,7 @@ func reset_run() -> void:
 	coins = 0
 	score = 0
 	rage = 0.0
+	portrait = "base"
 	grenades = 8
 	has_vest = false
 	current_weapon = "pistola"
@@ -203,6 +206,13 @@ func add_kill_rage(boss: bool = false) -> void:
 	add_rage(RAGE_PER_BOSS if boss else RAGE_PER_KILL)
 
 
+func set_portrait(kind: String) -> void:
+	if portrait == kind:
+		return
+	portrait = kind
+	portrait_changed.emit(kind)
+
+
 func cycle_weapon() -> void:
 	var idx := weapon_order.find(current_weapon)
 	for i in range(1, weapon_order.size() + 1):
@@ -269,6 +279,7 @@ func _emit_all() -> void:
 	score_changed.emit(score)
 	rage_changed.emit(rage, MAX_RAGE)
 	ammo_changed.emit(current_weapon, ammo[current_weapon])
+	portrait_changed.emit(portrait)
 
 
 func _bind_actions() -> void:
