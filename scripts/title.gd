@@ -6,6 +6,7 @@ var screen: int = Screen.PRESS_START
 var blink := 0.0
 var menu_index := 0
 var waiting_bind := ""
+var _capture_frames := 0
 
 @onready var poster: TextureRect = $Poster
 @onready var press_start: Label = $PressStart
@@ -52,9 +53,15 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if screen != Screen.PRESS_START:
 		press_start.modulate.a = 1.0
-		return
-	blink += delta
-	press_start.modulate.a = 1.0 if fmod(blink, 0.9) < 0.55 else 0.12
+	else:
+		blink += delta
+		press_start.modulate.a = 1.0 if fmod(blink, 0.9) < 0.55 else 0.12
+	if OS.get_environment("KIKO_CAPTURE") != "":
+		_capture_frames += 1
+		if _capture_frames == 20:
+			get_viewport().get_texture().get_image().save_png(
+				OS.get_environment("KIKO_CAPTURE") + "/title_full_poster.png"
+			)
 
 
 func _unhandled_input(event: InputEvent) -> void:

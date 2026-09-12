@@ -4,11 +4,23 @@
 
 Não precisa do Godot nem do `.bat`. Baixe este arquivo e dê **dois cliques**:
 
-**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/megadrive-rom-44a0/KikoWildFuryMatajava.exe**
+**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/kiko-real-sprites-44a0/KikoWildFuryMatajava.exe**
 
 No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
 O SmartScreen do Windows pode avisar (o `.exe` não é assinado): **Mais informações → Executar assim mesmo**.
+
+## Arte
+
+O personagem usa a **sprite sheet de pixel art** em `assets/sprites/kiko_sheet.jpg` (andar, tiro, rage, pulo, golpe, dano, morte).
+
+A tela de abertura usa o **pôster completo** `assets/sprites/title_keyart.jpg` — sem corte. O viewport 16:9 mostra o pôster inteiro com faixas laterais.
+
+Para recortar os frames de novo:
+
+```bash
+python3 tools/slice_kiko_sheet.py
+```
 
 ## Abrir no Godot (opcional)
 
@@ -31,22 +43,6 @@ O SmartScreen do Windows pode avisar (o `.exe` não é assinado): **Mais informa
 ## Fonte da verdade
 
 `scripts/roteiro.gd` (autoload `Roteiro`) guarda fases, diálogos, arenas, spawns e o chefe da Fazenda Tomada. `scripts/stage_1.gd` chama `boot(1)` e o `StageController` executa esses eventos.
-
-## Estrutura
-
-```
-project.godot
-scripts/     GDScript (player, inimigos, câmera, diálogos, fase 1)
-scenes/      cenas Godot
-assets/      frames, tiles, UI
-tools/prepare_assets.py
-```
-
-Para regenerar os sprites de gameplay:
-
-```bash
-python3 tools/prepare_assets.py
-```
 
 ## Mega Drive / Genesis
 

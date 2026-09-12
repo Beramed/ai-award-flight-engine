@@ -4,10 +4,10 @@
 [ext_resource type="Script" path="res://scripts/camera_rig.gd" id="2_cam"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
-size = Vector2(14, 32)
+size = Vector2(18, 42)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_melee"]
-size = Vector2(38, 28)
+size = Vector2(48, 32)
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
@@ -16,7 +16,7 @@ script = ExtResource("1_player")
 
 [node name="Anim" type="AnimatedSprite2D" parent="."]
 texture_filter = 0
-position = Vector2(0, -6)
+position = Vector2(0, -21)
 
 [node name="Collision" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")
@@ -26,11 +26,11 @@ collision_layer = 0
 collision_mask = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Melee"]
-position = Vector2(16, 0)
+position = Vector2(24, -8)
 shape = SubResource("RectangleShape2D_melee")
 
 [node name="Muzzle" type="Marker2D" parent="."]
-position = Vector2(16, -6)
+position = Vector2(34, -18)
 
 [node name="Camera" type="Camera2D" parent="."]
 script = ExtResource("2_cam")
