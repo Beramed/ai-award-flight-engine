@@ -7,6 +7,10 @@ var boom_t := 0.0
 var fly_t := 0.0
 var fly_frames: Array[Texture2D] = []
 var boom_frames: Array[Texture2D] = []
+var boom_hits: Dictionary = {}
+var ground_blast := false
+const GROUND_BOOM_FRAMES := 2.0
+const BOOM_FPS := 11.0
 
 
 func setup(impulse: Vector2) -> void:
@@ -25,19 +29,23 @@ func setup(impulse: Vector2) -> void:
 func _physics_process(delta: float) -> void:
 	if exploding:
 		boom_t += delta
-		var idx := int(boom_t * 11.0)
+		var idx := int(boom_t * BOOM_FPS)
 		if boom_frames.is_empty() or idx >= boom_frames.size():
 			queue_free()
 			return
 		_apply_tex(boom_frames[idx])
 		$Sprite.rotation = 0.0
-		$Sprite.scale = Vector2(1.2, 1.2)
+		$Sprite.scale = Vector2(1.35, 1.15) if ground_blast else Vector2(1.2, 1.2)
+		_hurt_in_blast()
+		if boom_t >= GROUND_BOOM_FRAMES / BOOM_FPS:
+			$Boom.monitoring = false
 		return
 
 	velocity.y += 620.0 * delta
 	var hit := move_and_collide(velocity * delta)
 	if hit:
-		_explode()
+		var n := hit.get_normal()
+		_explode(n.y < -0.35)
 		return
 	life -= delta
 	fly_t += delta
@@ -47,7 +55,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		rotation += delta * 5.5
 	if life <= 0.0:
-		_explode()
+		_explode(false)
 
 
 func _apply_tex(tex: Texture2D) -> void:
@@ -58,21 +66,33 @@ func _apply_tex(tex: Texture2D) -> void:
 	$Sprite.centered = true
 
 
-func _explode() -> void:
+func _explode(on_ground: bool = false) -> void:
 	if exploding:
 		return
 	exploding = true
+	ground_blast = on_ground
 	velocity = Vector2.ZERO
 	rotation = 0.0
 	$CollisionShape2D.set_deferred("disabled", true)
-	var boom := $Boom
-	boom.monitoring = true
-	await get_tree().process_frame
-	if not is_instance_valid(self):
+	var boom_shape := $Boom/CollisionShape2D.shape as CircleShape2D
+	if boom_shape:
+		var copy := boom_shape.duplicate() as CircleShape2D
+		# At least two Kiko-frame-widths of ground reach when it lands.
+		copy.radius = 72.0 if on_ground else 42.0
+		$Boom/CollisionShape2D.shape = copy
+		if on_ground:
+			$Boom/CollisionShape2D.position = Vector2(0, 6)
+	$Boom.monitoring = true
+	boom_hits.clear()
+	_hurt_in_blast()
+
+
+func _hurt_in_blast() -> void:
+	if not $Boom.monitoring:
 		return
-	for body in boom.get_overlapping_bodies():
+	for body in $Boom.get_overlapping_bodies():
+		if boom_hits.has(body):
+			continue
 		if body.has_method("take_hit") and not body.is_in_group("player"):
+			boom_hits[body] = true
 			body.take_hit(damage, (body.global_position - global_position).normalized() * 160)
-	boom.monitoring = false
-	if boom_frames.is_empty():
-		queue_free()

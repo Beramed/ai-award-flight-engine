@@ -95,15 +95,17 @@ func _run_event(ev: Dictionary) -> void:
 
 func _run_arena(ev: Dictionary) -> void:
 	waiting_arena = true
-	cam.lock_arena(float(ev.get("left", 0)), float(ev.get("right", 480)))
-	_spawn_blockers(float(ev.get("left", 0)), float(ev.get("right", 480)))
-	if ev.has("chefe"):
+	var is_boss := ev.has("chefe")
+	if is_boss:
+		cam.lock_arena(float(ev.get("left", 0)), float(ev.get("right", 480)))
+		_spawn_blockers(float(ev.get("left", 0)), float(ev.get("right", 480)))
 		await dialog.play(Roteiro.dialogo(stage_number, "chefe"))
 	for onda in ev.get("ondas", []):
 		_spawn_pack(onda)
 		await _wait_enemies_dead()
-	_clear_blockers()
-	cam.unlock_arena()
+	if is_boss:
+		_clear_blockers()
+		cam.unlock_arena()
 	hud.show_go()
 	waiting_arena = false
 
@@ -132,7 +134,7 @@ func _spawn_pack(pack: Array) -> void:
 		else:
 			node = preload("res://scenes/enemy.tscn").instantiate()
 		var data := Roteiro.inimigo(id)
-		var y := ground_y - 18.0
+		var y := ground_y
 		if bool(data.get("airborne", false)):
 			y = ground_y - (118.0 if String(data.get("kind", "")) == "bird" else 102.0)
 		node.global_position = Vector2(float(info.get("x", 400)), y)
@@ -154,7 +156,7 @@ func _spawn_player() -> void:
 	cam = player.get_node("Camera")
 	cam.configure(float(data.get("largura", 5600)))
 	player.spawn_point = start
-	player.died.connect(func(): player.spawn_point = Vector2(max(cam.lock_left + 48, start.x), start.y))
+	player.died.connect(func(): player.spawn_point = Vector2(max(player.global_position.x, start.x), start.y))
 	if GameState.player_count >= 2:
 		var p2: PlayerKiko = preload("res://scenes/player.tscn").instantiate()
 		p2.player_index = 1
@@ -200,6 +202,7 @@ func _build_world() -> void:
 		add_child(sky2)
 
 	_static_rect(Rect2(0, ground_y, width, 40))
+	_add_sky_parallax()
 	if panorama == null:
 		for x in range(0, int(width), 32):
 			var g := Sprite2D.new()
@@ -224,10 +227,28 @@ func _build_world() -> void:
 		_spawn_prop(prop)
 	for box in data.get("caixas", []):
 		var crate := preload("res://scenes/crate.tscn").instantiate()
-		crate.global_position = Vector2(float(box.get("x", 0)), ground_y - 16)
+		crate.global_position = Vector2(float(box.get("x", 0)), ground_y - 8)
 		add_child(crate)
 		crate.setup(String(box.get("loot", "moedas")))
 	_left_wall()
+
+
+func _add_sky_parallax() -> void:
+	var sky_tex := SpriteLib.tile("fazenda_sky")
+	if sky_tex == null:
+		return
+	var pb := ParallaxBackground.new()
+	var layer := ParallaxLayer.new()
+	layer.motion_scale = Vector2(0.16, 0.0)
+	layer.motion_mirroring = Vector2(float(sky_tex.get_width()), 0)
+	var sky := Sprite2D.new()
+	sky.texture = sky_tex
+	sky.centered = false
+	sky.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sky.z_index = -20
+	layer.add_child(sky)
+	pb.add_child(layer)
+	add_child(pb)
 
 
 func _spawn_prop(prop: Dictionary) -> void:
@@ -235,19 +256,19 @@ func _spawn_prop(prop: Dictionary) -> void:
 	var x := float(prop.get("x", 0))
 	match tipo:
 		"celeiro", "celeiro_fogo":
-			_sprite_prop(SpriteLib.tile("barn"), Vector2(x, ground_y - 64), Vector2(4, 4))
+			_sprite_prop(SpriteLib.tile("barn"), Vector2(x, ground_y - 36), Vector2(2.2, 2.2))
 			if tipo == "celeiro_fogo":
-				_sprite_prop(SpriteLib.tile("fire"), Vector2(x + 20, ground_y - 48), Vector2(2, 2))
+				_sprite_prop(SpriteLib.tile("fire"), Vector2(x + 12, ground_y - 28), Vector2(1.1, 1.1))
 		"milho":
 			var w := int(prop.get("w", 160))
-			for i in range(0, w, 18):
-				_sprite_prop(SpriteLib.tile("corn"), Vector2(x + i, ground_y - 32), Vector2(2, 2))
+			for i in range(0, w, 14):
+				_sprite_prop(SpriteLib.tile("corn"), Vector2(x + i, ground_y - 18), Vector2(1.1, 1.1))
 		"cerca":
 			var w2 := int(prop.get("w", 120))
-			for i in range(0, w2, 32):
-				_sprite_prop(SpriteLib.tile("fence"), Vector2(x + i, ground_y - 32), Vector2(2, 2))
+			for i in range(0, w2, 18):
+				_sprite_prop(SpriteLib.tile("fence"), Vector2(x + i, ground_y - 16), Vector2(1.05, 1.05))
 		"silo":
-			_static_rect(Rect2(x, ground_y - 96, 28, 96), SpriteLib.tile("metal"))
+			_static_rect(Rect2(x, ground_y - 52, 16, 52), SpriteLib.tile("metal"))
 		"plataforma":
 			var y := float(prop.get("y", 160))
 			var w3 := float(prop.get("w", 120))
@@ -264,6 +285,7 @@ func _sprite_prop(tex: Texture2D, pos: Vector2, scl: Vector2) -> void:
 	s.scale = scl
 	s.z_index = -1
 	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	s.add_to_group("world_chunk")
 	add_child(s)
 
 
