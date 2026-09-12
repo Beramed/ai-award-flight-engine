@@ -14,6 +14,12 @@ func setup(p_kind: String) -> void:
 		"fuzil", "doze", "sniper":
 			spr.texture = SpriteLib.fx("bullet_heavy")
 			modulate = Color(1.1, 0.8, 0.3)
+		"seringa", "adrenalina":
+			spr.texture = SpriteLib.fx("syringe")
+			if spr.texture == null:
+				spr.texture = SpriteLib.ui("pickup_syringe")
+		"granadas":
+			spr.texture = SpriteLib.fx("grenade")
 		_:
 			spr.texture = SpriteLib.ui("crate")
 
@@ -30,10 +36,13 @@ func _on_body_entered(body: Node) -> void:
 			GameState.give_weapon("doze", 18)
 		"sniper":
 			GameState.give_weapon("sniper", 8)
-		"granadas":
-			GameState.grenades += 4
 		"kit", "cura":
 			GameState.heal_full()
 		"municao":
 			GameState.refill_ammo()
+		"seringa", "adrenalina":
+			GameState.add_rage(55.0)
+		"granadas":
+			GameState.grenades += 4
+			GameState.ammo_changed.emit("granada", GameState.grenades)
 	queue_free()

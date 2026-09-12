@@ -104,7 +104,7 @@ func _build() -> void:
 	root.add_child(hp_fill)
 
 	var rage_pos := Vector2(col_x, hp_pos.y + hp_h + 2.0)
-	var rage_size := Vector2(col_w, 7.0)
+	var rage_size := Vector2(col_w, 9.0)
 	rage_back = ColorRect.new()
 	rage_back.color = Color(0.05, 0.08, 0.16, 0.95)
 	rage_back.position = rage_pos
@@ -119,12 +119,12 @@ func _build() -> void:
 	rage_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(rage_fill)
 
-	rage_lbl = _hud_label(rage_pos, rage_size, 6)
+	rage_lbl = _hud_label(rage_pos, rage_size, 5)
 	rage_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rage_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	rage_lbl.text = "RAGE"
-	rage_lbl.clip_text = true
-	rage_lbl.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0, 1))
+	rage_lbl.text = "ADRENALINA"
+	rage_lbl.clip_text = false
+	rage_lbl.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0, 1))
 
 	var text_y := rage_pos.y + rage_size.y + 6.0
 	lives_lbl = _hud_label(Vector2(col_x, text_y), Vector2(col_w, 9), 7)

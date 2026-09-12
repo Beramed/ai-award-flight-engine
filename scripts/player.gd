@@ -151,9 +151,15 @@ func _run_capture() -> void:
 			GameState.score = 24500
 			GameState.score_changed.emit(GameState.score)
 			GameState.add_rage(80.0)
+		if _capture_frames == 15:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_walk.png")
 	elif _capture_frames == 16:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_arcade.png")
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_walk.png")
+		_spawn_capture_enemy("javali_investida", Vector2(90, 0), -1)
+		_spawn_capture_enemy("javali_pedra", Vector2(-70, 0), 1)
+		_spawn_capture_enemy("passaro_pedra", Vector2(120, -100), -1)
+		_spawn_capture_enemy("drone_carga", Vector2(40, -90), -1)
 	elif _capture_frames < 22:
 		GameState.set_portrait("rage")
 		anim.play("rage")
@@ -258,6 +264,13 @@ func _run_aim_demo() -> void:
 		for node in get_tree().get_nodes_in_group("grenades"):
 			if node.has_method("_explode"):
 				node._explode()
+
+
+func _spawn_capture_enemy(id: String, offset: Vector2, face: int) -> void:
+	var e := preload("res://scenes/enemy.tscn").instantiate()
+	e.global_position = global_position + offset
+	get_tree().current_scene.add_child(e)
+	e.setup(id, face)
 
 
 func _update_aim() -> void:
