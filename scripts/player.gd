@@ -22,6 +22,7 @@ var rage_t := 0.0
 var crouching := false
 var locked := false
 var spawn_point := Vector2.ZERO
+var last_ground := Vector2.ZERO
 var _capture_frames := 0
 
 @onready var anim: AnimatedSprite2D = $Anim
@@ -40,6 +41,7 @@ func _ready() -> void:
 		if cam_node:
 			cam_node.enabled = false
 	spawn_point = global_position
+	last_ground = global_position
 	anim.sprite_frames = SpriteLib.kiko_frames()
 	anim.play("idle")
 	anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -88,6 +90,12 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
+	else:
+		last_ground = global_position
+
+	if global_position.y > 320.0:
+		fall_in_water()
+		return
 
 	var x := Input.get_axis(_ia("move_left"), _ia("move_right"))
 	var holding_down := Input.is_action_pressed(_ia("aim_down"))
@@ -470,6 +478,13 @@ func _try_rage() -> void:
 	rage_t = 10.0
 	invuln = 10.0
 	GameState.set_portrait("rage")
+
+
+func fall_in_water() -> void:
+	var safe := last_ground if last_ground != Vector2.ZERO else spawn_point
+	global_position = safe
+	velocity = Vector2.ZERO
+	take_hit(1, Vector2(0, -90))
 
 
 func take_hit(_amount: int = 1, knock := Vector2.ZERO) -> void:

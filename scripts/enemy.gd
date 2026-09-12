@@ -16,6 +16,7 @@ var ai_phase := "move"
 var ai_t := 0.0
 var hover_y := 0.0
 var touch_dmg := 1
+var loot_kind := ""
 
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var col: CollisionShape2D = $Collision
@@ -255,10 +256,11 @@ func _die() -> void:
 
 
 func _drop_loot() -> void:
-	var kinds := ["municao", "granadas", "seringa"]
+	var kinds := ["municao", "granadas", "seringa", "kit", "fuzil"]
+	var drop: String = loot_kind if loot_kind != "" else kinds[randi() % kinds.size()]
 	var p := preload("res://scenes/pickup.tscn").instantiate()
 	p.global_position = global_position + Vector2(0, 8)
-	p.setup(kinds[randi() % kinds.size()])
+	p.setup(drop)
 	get_tree().current_scene.add_child(p)
 
 
