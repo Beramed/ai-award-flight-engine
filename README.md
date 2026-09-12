@@ -4,7 +4,7 @@
 
 Não precisa do Godot nem do `.bat`. Baixe este arquivo e dê **dois cliques**:
 
-**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/farm-playable-world-44a0/KikoWildFuryMatajava.exe**
+**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/farm-art-shop-downshot-44a0/KikoWildFuryMatajava.exe**
 
 No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
@@ -43,6 +43,10 @@ python3 tools/slice_kiko_sheet.py
 | Rage (barra azul cheia) | R / Shift |
 
 Vida: **3 hits**. Cada hit tira 33% da barra laranja e zera a **RAGE**. A RAGE sobe ao matar inimigos. HUD no topo (vida / vidas / score), armas e munição na base.
+
+No meio da fazenda abre o **Armazém do Mineiro** (loja no palco, sem trocar de cena). **EXIT**, Esc ou Enter volta ao jogo.
+
+S + atirar no chão dispara **90° para baixo** (agachado). Diagonais continuam diagonais.
 
 ## Fonte da verdade
 

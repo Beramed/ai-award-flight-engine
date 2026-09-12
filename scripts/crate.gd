@@ -11,6 +11,8 @@ func setup(p_loot: String, p_kind := "crate") -> void:
 	kind = p_kind
 	$Sprite.centered = true
 	$Sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	$Sprite.z_index = 3
+	z_index = 3
 	var shape := $CollisionShape2D.shape as RectangleShape2D
 	var copy := (shape.duplicate() if shape else RectangleShape2D.new()) as RectangleShape2D
 	match kind:
@@ -24,8 +26,10 @@ func setup(p_loot: String, p_kind := "crate") -> void:
 			copy.size = Vector2(24, 16)
 		"fence":
 			$Sprite.texture = SpriteLib.tile("fence")
-			$Sprite.scale = Vector2(0.72, 0.72)
-			copy.size = Vector2(18, 20)
+			$Sprite.scale = Vector2(0.72, 0.55)
+			$Sprite.z_index = 1
+			z_index = 1
+			copy.size = Vector2(16, 14)
 		_:
 			$Sprite.texture = SpriteLib.ui("crate")
 			$Sprite.scale = Vector2(0.82, 0.82)

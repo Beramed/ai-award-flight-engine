@@ -16,6 +16,7 @@ var player: PlayerKiko
 var cam: StageCamera
 var hud: HUD
 var dialog: DialogUI
+var shop: Node
 var ground_y := 236.0
 var _chunks: Dictionary = {}
 const CHUNK_W := 640.0
@@ -132,6 +133,11 @@ func _run_event(ev: Dictionary) -> void:
 			await _run_arena(ev)
 		"resgate":
 			await _run_rescue(ev)
+		"loja":
+			if OS.get_environment("KIKO_MAPSHOT") != "":
+				return
+			if shop:
+				await shop.call("open")
 		"vitoria":
 			GameState.stage_cleared = true
 			stage_cleared.emit()
@@ -198,6 +204,7 @@ func _spawn_player() -> void:
 	player = preload("res://scenes/player.tscn").instantiate()
 	var start: Vector2 = data.get("player_start", Vector2(72, 200))
 	player.global_position = start
+	player.z_index = 6
 	add_child(player)
 	cam = player.get_node("Camera")
 	cam.configure(float(data.get("largura", 5600)))
@@ -207,6 +214,7 @@ func _spawn_player() -> void:
 		var p2: PlayerKiko = preload("res://scenes/player.tscn").instantiate()
 		p2.player_index = 1
 		p2.global_position = start + Vector2(28, 0)
+		p2.z_index = 6
 		add_child(p2)
 		p2.spawn_point = p2.global_position
 		p2.modulate = Color(1.15, 0.92, 0.75)
@@ -218,16 +226,22 @@ func _spawn_hud() -> void:
 	hud.set_stage_title("FASE %d — %s" % [stage_number, String(data.get("nome", ""))])
 	dialog = preload("res://scenes/dialog.tscn").instantiate()
 	add_child(dialog)
+	shop = preload("res://scenes/shop.tscn").instantiate()
+	add_child(shop)
 
 
 func _build_world() -> void:
 	var width := float(data.get("largura", 5600))
-	_add_parallax_layers()
+	_add_sky_parallax()
+	_add_panorama(width)
 	_build_ground(width)
 	_build_lake_and_bridge()
-	_paint_terrain(width)
 	_build_farm_objects()
 	for prop in data.get("props", []):
+		var tipo := String(prop.get("tipo", ""))
+		# Barns, houses, corn and long fences are already painted in the panorama.
+		if tipo in ["celeiro", "celeiro_fogo", "milho", "cerca", "silo"]:
+			continue
 		_spawn_prop(prop)
 	for box in data.get("caixas", []):
 		_breakable("crate", float(box.get("x", 0)), String(box.get("loot", "moedas")))
@@ -264,46 +278,39 @@ func _stream_chunks() -> void:
 		n.visible = absf(mid - cx) < STREAM_RADIUS
 
 
-func _add_parallax_layers() -> void:
-	var pb := ParallaxBackground.new()
+func _add_sky_parallax() -> void:
 	var sky_tex := SpriteLib.tile("fazenda_sky")
-	if sky_tex:
-		var far := ParallaxLayer.new()
-		far.motion_scale = Vector2(0.12, 0.0)
-		far.motion_mirroring = Vector2(float(sky_tex.get_width()), 0)
-		var sky := Sprite2D.new()
-		sky.texture = sky_tex
-		sky.centered = false
-		sky.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		far.add_child(sky)
-		pb.add_child(far)
-	var hill_tex := SpriteLib.tile("hills")
-	if hill_tex:
-		var mid := ParallaxLayer.new()
-		mid.motion_scale = Vector2(0.38, 0.0)
-		mid.motion_mirroring = Vector2(float(hill_tex.get_width()), 0)
-		var hills := Sprite2D.new()
-		hills.texture = hill_tex
-		hills.centered = false
-		hills.position.y = 168
-		hills.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		hills.modulate = Color(0.55, 0.48, 0.42, 0.85)
-		mid.add_child(hills)
-		pb.add_child(mid)
-	var fg_tex := SpriteLib.tile("grass_fg")
-	if fg_tex:
-		var fg := ParallaxLayer.new()
-		fg.motion_scale = Vector2(1.18, 0.0)
-		fg.motion_mirroring = Vector2(float(fg_tex.get_width()), 0)
-		var grass := Sprite2D.new()
-		grass.texture = fg_tex
-		grass.centered = false
-		grass.position.y = 252
-		grass.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		grass.z_index = 8
-		fg.add_child(grass)
-		pb.add_child(fg)
+	if sky_tex == null:
+		return
+	var pb := ParallaxBackground.new()
+	var far := ParallaxLayer.new()
+	far.motion_scale = Vector2(0.14, 0.0)
+	far.motion_mirroring = Vector2(float(sky_tex.get_width()), 0)
+	var sky := Sprite2D.new()
+	sky.texture = sky_tex
+	sky.centered = false
+	sky.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	far.add_child(sky)
+	pb.add_child(far)
 	add_child(pb)
+
+
+func _add_panorama(width: float) -> void:
+	var panorama := SpriteLib.tile("fazenda_panorama")
+	if panorama == null:
+		return
+	var bg := Sprite2D.new()
+	bg.name = "FazendaPanorama"
+	bg.texture = panorama
+	bg.centered = false
+	bg.position = Vector2.ZERO
+	bg.z_index = -8
+	bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var tex_w := float(panorama.get_width())
+	var tex_h := float(panorama.get_height())
+	if tex_w > 0.0 and tex_h > 0.0:
+		bg.scale = Vector2(width / tex_w, 270.0 / tex_h)
+	add_child(bg)
 
 
 func _build_ground(width: float) -> void:
@@ -326,17 +333,9 @@ func _build_lake_and_bridge() -> void:
 	water.add_child(wcol)
 	add_child(water)
 	water.body_entered.connect(_on_water_body)
-	var wx := LAKE_LEFT
-	while wx < LAKE_RIGHT:
-		_deco_sprite("water", wx, ground_y - 4, 1.0, -4)
-		wx += 32.0
 	var bridge_x := LAKE_LEFT - 24.0
 	var bridge_w := lake_w + 48.0
 	_static_rect(Rect2(bridge_x, ground_y, bridge_w, 12))
-	var bx := bridge_x
-	while bx < bridge_x + bridge_w:
-		_deco_sprite("bridge", bx, ground_y - 4, 1.0, -1)
-		bx += 32.0
 
 
 func _on_water_body(body: Node) -> void:
@@ -349,79 +348,53 @@ func _on_water_body(body: Node) -> void:
 			body.call_deferred("queue_free")
 
 
-func _paint_terrain(width: float) -> void:
-	var x := 0.0
-	while x < width:
-		if x >= LAKE_LEFT and x < LAKE_RIGHT:
-			x += 32.0
-			continue
-		var dirt_zone := x >= 4300.0 or (x >= LAKE_LEFT - 80.0 and x <= LAKE_RIGHT + 80.0)
-		_deco_sprite("dirt_road" if dirt_zone else "grass", x, ground_y, 1.0, -2)
-		_deco_sprite("dirt", x, ground_y + 16, 1.0, -3)
-		x += 32.0
-
-
 func _build_farm_objects() -> void:
-	_solid_prop("gate", 18.0, 1.0, Vector2(0.28, 0.9))
+	# Interactive low props only. Houses, barns and trees stay in the panorama.
 	_breakable("fence", 120.0, "none")
 	_breakable("fence", 138.0, "none")
-	_breakable("fence", 156.0, "none")
 	_breakable("barrel", 188.0, "moedas")
 	_breakable("hay", 310.0, "none")
 	_breakable("hay", 338.0, "none")
-	_solid_prop("rock_block", 250.0)
-	_solid_prop("tree", 470.0, 1.2, Vector2(0.32, 0.82))
-	_solid_prop("tree", 640.0, 1.2, Vector2(0.32, 0.82))
+	_low_rock(250.0)
 	_breakable("fence", 700.0, "none")
-	_breakable("fence", 718.0, "none")
 	_breakable("barrel", 760.0, "granadas")
-	_solid_prop("house", 880.0, 1.4)
-	_solid_prop("barn_big", 1120.0, 1.45)
-	_solid_prop("tree", 1380.0, 1.15, Vector2(0.32, 0.82))
-	_solid_prop("house", 1500.0, 1.35)
 	_breakable("hay", 1720.0, "none")
 	_breakable("crate", 1800.0, "moedas")
-	_solid_prop("rock_block", 1920.0)
-	_solid_prop("tree", 2000.0, 1.0, Vector2(0.32, 0.82))
-	_solid_prop("tree", 2520.0, 1.0, Vector2(0.32, 0.82))
+	_low_rock(1920.0)
 	_breakable("barrel", 2620.0, "municao")
-	_solid_prop("house", 2840.0, 1.35)
-	_solid_prop("tree", 3180.0, 1.15, Vector2(0.32, 0.82))
-	_solid_prop("tree", 3340.0, 1.15, Vector2(0.32, 0.82))
 	_breakable("hay", 3460.0, "none")
 	_breakable("fence", 3600.0, "none")
-	_breakable("fence", 3618.0, "none")
-	_solid_prop("shed", 3860.0, 1.4)
-	_solid_prop("tree", 4040.0, 1.0, Vector2(0.32, 0.82))
 	_breakable("barrel", 4180.0, "kit")
-	_solid_prop("rock_block", 4420.0)
-	_solid_prop("rock_block", 4560.0)
-	_solid_prop("rock_block", 5340.0)
+	_low_rock(4420.0)
+	_low_rock(4560.0)
+	_low_rock(5340.0)
 
 
-func _solid_prop(tex_name: String, x: float, scl := 1.0, col_scale := Vector2(0.86, 0.92)) -> void:
-	var tex := SpriteLib.tile(tex_name)
-	if tex == null:
-		return
-	var w := float(tex.get_width()) * scl
-	var h := float(tex.get_height()) * scl
+func _low_rock(x: float) -> void:
+	var tex := SpriteLib.tile("rock_block")
 	var body := StaticBody2D.new()
 	body.collision_layer = 1
 	body.collision_mask = 0
-	var spr := Sprite2D.new()
-	spr.texture = tex
-	spr.centered = false
-	spr.scale = Vector2(scl, scl)
-	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	spr.z_index = -1
-	body.add_child(spr)
+	var w := 24.0
+	var h := 14.0
+	var spr_h := h
+	if tex:
+		var spr := Sprite2D.new()
+		spr.texture = tex
+		spr.centered = false
+		spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		spr.z_index = 1
+		body.add_child(spr)
+		w = float(tex.get_width())
+		spr_h = float(tex.get_height())
+		h = minf(spr_h, 16.0)
 	var col := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
-	shape.size = Vector2(w * col_scale.x, h * col_scale.y)
+	shape.size = Vector2(w, h)
 	col.shape = shape
-	col.position = Vector2(w * 0.5, h - shape.size.y * 0.5)
+	col.position = Vector2(w * 0.5, spr_h - h * 0.5)
 	body.add_child(col)
-	_add_world_child(body, x, ground_y - h)
+	_add_world_child(body, x, ground_y - spr_h)
 
 
 func _deco_sprite(tex_name: String, x: float, y: float, scl := 1.0, z := -2) -> void:
@@ -449,25 +422,12 @@ func _spawn_prop(prop: Dictionary) -> void:
 	var tipo := String(prop.get("tipo", ""))
 	var x := float(prop.get("x", 0))
 	match tipo:
-		"celeiro":
-			_solid_prop("barn_big", x, 1.45)
-		"celeiro_fogo":
-			_solid_prop("shed", x, 1.4)
-			_deco_sprite("fire", x + 10.0, ground_y - 28.0, 1.1, 1)
-		"milho":
-			var w := int(prop.get("w", 160))
-			for i in range(0, w, 14):
-				_deco_sprite("corn", x + float(i), ground_y - 18.0, 1.1, -1)
-		"cerca":
-			var w2 := int(prop.get("w", 120))
-			for i in range(0, w2, 18):
-				_breakable("fence", x + float(i), "none")
-		"silo":
-			_static_rect(Rect2(x, ground_y - 52, 16, 52), SpriteLib.tile("metal"))
 		"plataforma":
 			var y := float(prop.get("y", 160))
 			var w3 := float(prop.get("w", 120))
-			_static_rect(Rect2(x, y, w3, 16), SpriteLib.tile("wood"))
+			_static_rect(Rect2(x, y, w3, 12), SpriteLib.tile("wood"))
+		_:
+			pass
 
 
 func _static_rect(rect: Rect2, tex: Texture2D = null) -> void:

@@ -24,6 +24,7 @@ var locked := false
 var spawn_point := Vector2.ZERO
 var last_ground := Vector2.ZERO
 var _capture_frames := 0
+var _feature_capture_done := false
 
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var col: CollisionShape2D = $Collision
@@ -46,6 +47,7 @@ func _ready() -> void:
 	anim.play("idle")
 	anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	anim.centered = true
+	z_index = 6
 	scale = Vector2(BODY_SCALE, BODY_SCALE)
 	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
 		Engine.max_fps = 60
@@ -124,6 +126,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = JUMP_VELOCITY
 
 	_update_aim()
+	_update_muzzle()
 
 	if Input.is_action_just_pressed("weapon_next") and player_index == 0:
 		GameState.cycle_weapon()
@@ -137,19 +140,6 @@ func _physics_process(delta: float) -> void:
 	_play_anim(x)
 	move_and_slide()
 	_clamp_camera_left()
-	muzzle.position = Vector2(36 * facing, -20 if not crouching else -10)
-	if not is_on_floor():
-		muzzle.position = Vector2(36 * facing, -22)
-	if aim.y < -0.85:
-		muzzle.position = Vector2(2 * facing, -42)
-	elif aim.y < -0.25:
-		muzzle.position = Vector2(24 * facing, -34)
-	elif aim.y > 0.85:
-		muzzle.position = Vector2(6 * facing, 16)
-	elif aim.y > 0.25:
-		muzzle.position = Vector2(22 * facing, 8)
-	$Melee/CollisionShape2D.position.x = 24 * facing
-	$Melee/CollisionShape2D.position.y = -8
 	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
 		_run_capture()
 
@@ -159,6 +149,8 @@ func _run_capture() -> void:
 		_run_aim_demo()
 		return
 	_capture_frames += 1
+	if _run_feature_capture():
+		return
 	var cap := OS.get_environment("KIKO_CAPTURE")
 	if _capture_frames < 16:
 		velocity.x = SPEED
@@ -264,6 +256,58 @@ func _run_capture() -> void:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_death.png")
 
 
+func _run_feature_capture() -> bool:
+	if _feature_capture_done:
+		return false
+	var cap := OS.get_environment("KIKO_CAPTURE")
+	if cap == "":
+		_feature_capture_done = true
+		return false
+	var f := _capture_frames
+	if f == 2:
+		global_position = Vector2(1280, ground_y_ref())
+		last_ground = global_position
+		velocity = Vector2.ZERO
+		GameState.coins = 240
+		GameState.coins_changed.emit(GameState.coins)
+		z_index = 6
+		var stage := get_parent()
+		if stage:
+			stage.set("busy", true)
+			stage.set("event_i", 999)
+		for node in get_tree().get_nodes_in_group("enemies"):
+			node.queue_free()
+	elif f == 14:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_house_front.png")
+		Input.action_press(_ia("aim_down"))
+		Input.action_press(_ia("shoot"))
+		GameState.current_weapon = "pistola"
+	elif f == 18:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_down.png")
+	elif f == 24:
+		Input.action_release(_ia("aim_down"))
+		Input.action_release(_ia("shoot"))
+		var shop := get_tree().get_first_node_in_group("shop_ui")
+		if shop and shop.has_method("force_open"):
+			shop.force_open()
+	elif f == 40:
+		get_viewport().get_texture().get_image().save_png(cap + "/shop_mineiro.png")
+		var shop2 := get_tree().get_first_node_in_group("shop_ui")
+		if shop2 and shop2.has_method("close"):
+			shop2.close()
+		global_position = spawn_point
+		_feature_capture_done = true
+		_capture_frames = 0
+	return not _feature_capture_done or f <= 40
+
+
+func ground_y_ref() -> float:
+	var stage := get_parent()
+	if stage and stage.get("ground_y") != null:
+		return float(stage.ground_y) - 20.0
+	return 216.0
+
+
 func _run_aim_demo() -> void:
 	_capture_frames += 1
 	if _capture_frames == 2:
@@ -296,11 +340,28 @@ func _spawn_capture_enemy(id: String, offset: Vector2, face: int) -> void:
 	e.setup(id, face)
 
 
+func _update_muzzle() -> void:
+	muzzle.position = Vector2(36 * facing, -20 if not crouching else -10)
+	if not is_on_floor():
+		muzzle.position = Vector2(36 * facing, -22)
+	if aim.y < -0.85:
+		muzzle.position = Vector2(2 * facing, -42)
+	elif aim.y < -0.25:
+		muzzle.position = Vector2(24 * facing, -34)
+	elif aim.y > 0.85:
+		muzzle.position = Vector2(4 * facing, 22 if crouching or is_on_floor() else 16)
+	elif aim.y > 0.25:
+		muzzle.position = Vector2(22 * facing, 8)
+	$Melee/CollisionShape2D.position.x = 24 * facing
+	$Melee/CollisionShape2D.position.y = -8
+
+
 func _update_aim() -> void:
 	var up := Input.is_action_pressed(_ia("aim_up"))
 	var down := Input.is_action_pressed(_ia("aim_down"))
 	var left := Input.is_action_pressed(_ia("move_left"))
 	var right := Input.is_action_pressed(_ia("move_right"))
+	var shooting := Input.is_action_pressed(_ia("shoot"))
 	aim = Vector2(facing, 0)
 	if up and not down:
 		if left or right:
@@ -310,7 +371,7 @@ func _update_aim() -> void:
 	elif down:
 		if left or right:
 			aim = Vector2(facing, 1).normalized()
-		elif not is_on_floor():
+		elif shooting or not is_on_floor():
 			aim = Vector2(0, 1)
 		else:
 			aim = Vector2(facing, 0)
@@ -318,6 +379,9 @@ func _update_aim() -> void:
 
 func _try_attack() -> void:
 	if melee_t > 0.0 or grenade_t > 0.0:
+		return
+	if aim.y > 0.7:
+		_shoot()
 		return
 	if rage_t > 0.0 or _enemy_in_melee():
 		_do_melee()
@@ -358,9 +422,9 @@ func _shoot() -> void:
 	if GameState.current_weapon in ["pistola", "doze"] or randf() < 0.35:
 		_spawn_casing()
 	var pellets: int = stats["pellets"]
+	var straight_down: bool = aim.y > 0.85 and absf(aim.x) < 0.15
 	for i in pellets:
-		var spread := deg_to_rad(stats["spread"]) * (i - (pellets - 1) / 2.0)
-		var dir := aim.rotated(spread)
+		var dir: Vector2 = Vector2(0, 1) if straight_down else aim.rotated(deg_to_rad(float(stats["spread"])) * (i - (pellets - 1) / 2.0))
 		if dir == Vector2.ZERO:
 			dir = Vector2(facing, 0)
 		_spawn_bullet(dir.normalized(), stats)
@@ -368,6 +432,8 @@ func _shoot() -> void:
 
 func _shoot_anim_name() -> String:
 	if aim.y > 0.7:
+		if anim.sprite_frames.has_animation("shoot_down_fire") and Input.is_action_pressed(_ia("shoot")):
+			return "shoot_down"
 		return "shoot_down" if anim.sprite_frames.has_animation("shoot_down") else "crouch"
 	if aim.y > 0.25:
 		return "shoot_diag_down" if anim.sprite_frames.has_animation("shoot_diag_down") else "crouch"
@@ -432,6 +498,8 @@ func _spawn_muzzle_fx() -> void:
 			flash.scale = Vector2(0.32, 0.32)
 		_:
 			flash.scale = Vector2(0.58, 0.58)
+	if aim.y > 0.85:
+		flash.scale *= 1.45
 	add_child(flash)
 	var tw := create_tween()
 	tw.tween_interval(0.06)

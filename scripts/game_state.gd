@@ -184,6 +184,16 @@ func add_coins(n: int) -> void:
 	coins_changed.emit(coins)
 
 
+func spend_coins(n: int) -> bool:
+	if n <= 0:
+		return true
+	if coins < n:
+		return false
+	coins -= n
+	coins_changed.emit(coins)
+	return true
+
+
 func add_score(n: int) -> void:
 	score += n
 	score_changed.emit(score)
@@ -294,6 +304,7 @@ func _bind_actions() -> void:
 	_act("rage", [KEY_R, KEY_SHIFT])
 	_act("confirm", [KEY_ENTER, KEY_SPACE, KEY_Z])
 	_act("ui_start", [KEY_ENTER, KEY_SPACE])
+	_act("ui_cancel", [KEY_ESCAPE])
 	_act("p2_move_left", [KEY_LEFT])
 	_act("p2_move_right", [KEY_RIGHT])
 	_act("p2_aim_up", [KEY_UP])
