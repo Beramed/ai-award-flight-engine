@@ -176,23 +176,57 @@ func _run_rescue(ev: Dictionary) -> void:
 
 
 func _spawn_pack(pack: Array) -> void:
-	for item in pack:
-		var info: Dictionary = item
+	var cam_x := 240.0
+	if cam:
+		cam_x = cam.get_screen_center_position().x
+	var half := 240.0
+	var margin := 72.0
+	for i in pack.size():
+		var info: Dictionary = pack[i]
 		var id := String(info.get("id", "javali_investida"))
 		var node: Node2D
 		if bool(info.get("boss", false)) or id == "mae_javali":
 			node = preload("res://scenes/boss_mae_javali.tscn").instantiate()
-		else:
-			node = preload("res://scenes/enemy.tscn").instantiate()
+			var y := ground_y
+			node.global_position = Vector2(float(info.get("x", cam_x + 180.0)), y)
+			add_child(node)
+			node.setup(id, int(info.get("facing", -1)))
+			continue
+		node = preload("res://scenes/enemy.tscn").instantiate()
 		var data := Roteiro.inimigo(id)
+		var airborne := bool(data.get("airborne", false))
+		var kind := String(data.get("kind", ""))
+		var intended_x := float(info.get("x", cam_x + 180.0))
+		var from_right := intended_x >= cam_x
+		if kind == "drone":
+			from_right = int(info.get("facing", -1)) <= 0
+		var spawn_x := cam_x + half + margin if from_right else cam_x - half - margin
+		spawn_x = clampf(spawn_x + float(i) * 18.0, -48.0, 5720.0)
+		if player and absf(spawn_x - player.global_position.x) < 90.0:
+			spawn_x = player.global_position.x + (half + margin) * (1.0 if from_right else -1.0)
+		var enter_facing := -1 if from_right else 1
+		var dest := intended_x
+		if from_right:
+			dest = clampf(intended_x, cam_x + 36.0, cam_x + 170.0)
+		else:
+			dest = clampf(intended_x, cam_x - 170.0, cam_x - 36.0)
+		dest += float(i) * 30.0 * float(enter_facing)
 		var y := ground_y
-		if bool(data.get("airborne", false)):
-			y = ground_y - (118.0 if String(data.get("kind", "")) == "bird" else 102.0)
-		node.global_position = Vector2(float(info.get("x", 400)), y)
+		if airborne:
+			y = ground_y - (118.0 if kind == "bird" else 102.0)
+		node.global_position = Vector2(spawn_x, y)
 		add_child(node)
-		node.setup(id, int(info.get("facing", -1)))
+		node.setup(id, enter_facing)
+		node.set("entering", true)
+		node.set("entry_target_x", dest)
+		if kind == "drone":
+			node.set("ferry", true)
 		if info.has("loot"):
-			node.set("loot_kind", String(info.get("loot")))
+			var drop := String(info.get("loot"))
+			node.set("loot_kind", drop)
+			var held = node.get("cargo")
+			if held:
+				held.loot = drop
 
 
 func _wait_enemies_dead() -> void:
