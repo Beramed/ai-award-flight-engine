@@ -13,6 +13,8 @@ func setup(p_dir: Vector2, p_speed: float, p_damage: int, p_piercing: bool, weap
 	damage = p_damage
 	piercing = p_piercing
 	rotation = dir.angle()
+	if dir.y > 0.2:
+		collision_mask = 4
 	var spr: Sprite2D = $Sprite
 	match weapon:
 		"pistola":

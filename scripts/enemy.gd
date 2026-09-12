@@ -40,6 +40,7 @@ func setup(p_id: String, p_facing: int = -1) -> void:
 		_:
 			anim.sprite_frames = SpriteLib.javali_frames()
 	anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	anim.centered = true
 	anim.flip_h = facing < 0
 	add_to_group("enemies")
 	var shape := col.shape as RectangleShape2D
@@ -57,6 +58,22 @@ func setup(p_id: String, p_facing: int = -1) -> void:
 		modulate = Color(0.75, 0.8, 0.9)
 	else:
 		anim.play("charge")
+	_snap_feet()
+
+
+func _snap_feet() -> void:
+	if airborne:
+		return
+	var shape := col.shape as RectangleShape2D
+	var half := 9.0
+	if shape:
+		half = shape.size.y * 0.5
+	global_position.y -= half * scale.y
+	var tex: Texture2D = null
+	if anim.sprite_frames and anim.sprite_frames.has_animation(anim.animation):
+		tex = anim.sprite_frames.get_frame_texture(anim.animation, 0)
+	if tex:
+		anim.position.y = -float(tex.get_height()) * 0.5 + half
 
 
 func _physics_process(delta: float) -> void:

@@ -90,9 +90,13 @@ func _physics_process(delta: float) -> void:
 		velocity.y += GRAVITY * delta
 
 	var x := Input.get_axis(_ia("move_left"), _ia("move_right"))
-	crouching = is_on_floor() and Input.is_action_pressed(_ia("aim_down"))
+	var holding_down := Input.is_action_pressed(_ia("aim_down"))
+	crouching = is_on_floor() and holding_down
 	if crouching:
-		x = 0.0
+		if abs(x) < 0.1:
+			x = 0.0
+		else:
+			x *= 0.42
 		var crouch_shape := col.shape as RectangleShape2D
 		if crouch_shape:
 			crouch_shape.size = Vector2(18, 26)
@@ -125,13 +129,17 @@ func _physics_process(delta: float) -> void:
 	_play_anim(x)
 	move_and_slide()
 	_clamp_camera_left()
-	muzzle.position = Vector2(36 * facing, -20 if not crouching else -14)
+	muzzle.position = Vector2(36 * facing, -20 if not crouching else -10)
 	if not is_on_floor():
 		muzzle.position = Vector2(36 * facing, -22)
 	if aim.y < -0.85:
 		muzzle.position = Vector2(2 * facing, -42)
 	elif aim.y < -0.25:
 		muzzle.position = Vector2(24 * facing, -34)
+	elif aim.y > 0.85:
+		muzzle.position = Vector2(6 * facing, 16)
+	elif aim.y > 0.25:
+		muzzle.position = Vector2(22 * facing, 8)
 	$Melee/CollisionShape2D.position.x = 24 * facing
 	$Melee/CollisionShape2D.position.y = -8
 	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
@@ -212,8 +220,15 @@ func _run_capture() -> void:
 	elif _capture_frames == 137:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_diag.png")
 		Input.action_release(_ia("aim_up"))
-		Input.action_release(_ia("shoot"))
+		Input.action_press(_ia("aim_down"))
+	elif _capture_frames == 148:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_diag_down.png")
 		Input.action_release(_ia("move_right"))
+		velocity.y = JUMP_VELOCITY
+	elif _capture_frames == 158:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_down.png")
+		Input.action_release(_ia("aim_down"))
+		Input.action_release(_ia("shoot"))
 		GameState.grenades = max(GameState.grenades, 2)
 		_throw_grenade()
 	elif _capture_frames == 155:
@@ -284,13 +299,13 @@ func _update_aim() -> void:
 			aim = Vector2(facing, -1).normalized()
 		else:
 			aim = Vector2(0, -1)
-	elif down and not is_on_floor():
+	elif down:
 		if left or right:
 			aim = Vector2(facing, 1).normalized()
-		else:
+		elif not is_on_floor():
 			aim = Vector2(0, 1)
-	elif crouching:
-		aim = Vector2(facing, 0)
+		else:
+			aim = Vector2(facing, 0)
 
 
 func _try_attack() -> void:
@@ -344,6 +359,12 @@ func _shoot() -> void:
 
 
 func _shoot_anim_name() -> String:
+	if aim.y > 0.7:
+		return "shoot_down" if anim.sprite_frames.has_animation("shoot_down") else "crouch"
+	if aim.y > 0.25:
+		return "shoot_diag_down" if anim.sprite_frames.has_animation("shoot_diag_down") else "crouch"
+	if crouching:
+		return "crouch_shoot" if anim.sprite_frames.has_animation("crouch_shoot") else "crouch"
 	if aim.y < -0.7:
 		return "shoot_up"
 	if aim.y < -0.25:
@@ -492,6 +513,14 @@ func _play_anim(x: float) -> void:
 		return
 	if Input.is_action_pressed(_ia("shoot")):
 		anim.play(_shoot_anim_name())
+	elif aim.y > 0.7:
+		anim.play("shoot_down" if anim.sprite_frames.has_animation("shoot_down") else "crouch")
+		anim.frame = 0
+		anim.pause()
+	elif aim.y > 0.25:
+		anim.play("shoot_diag_down" if anim.sprite_frames.has_animation("shoot_diag_down") else "crouch")
+		anim.frame = 0
+		anim.pause()
 	elif aim.y < -0.7:
 		anim.play("shoot_up")
 		anim.frame = 0

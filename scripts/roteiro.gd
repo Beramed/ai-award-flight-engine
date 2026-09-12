@@ -18,23 +18,23 @@ const SPEAKER_NAME := {
 const INIMIGOS := {
 	"javali_corredor": {
 		"hp": 3, "speed": 78.0, "touch": 1, "score": 100,
-		"kind": "charger", "melee_range": 22.0, "scale": 0.95,
+		"kind": "charger", "melee_range": 22.0, "scale": 0.55,
 	},
 	"javali_investida": {
 		"hp": 3, "speed": 86.0, "touch": 1, "score": 120,
-		"kind": "charger", "melee_range": 24.0, "scale": 0.98,
+		"kind": "charger", "melee_range": 24.0, "scale": 0.58,
 	},
 	"javali_pedra": {
 		"hp": 3, "speed": 52.0, "touch": 1, "score": 140,
-		"kind": "thrower", "melee_range": 22.0, "scale": 0.95,
+		"kind": "thrower", "melee_range": 22.0, "scale": 0.56,
 	},
 	"javali_saltador": {
 		"hp": 3, "speed": 55.0, "touch": 1, "score": 150,
-		"kind": "jumper", "melee_range": 22.0, "scale": 0.85,
+		"kind": "jumper", "melee_range": 22.0, "scale": 0.52,
 	},
 	"javali_blindado": {
 		"hp": 8, "speed": 40.0, "touch": 1, "score": 250,
-		"kind": "armored", "melee_range": 26.0, "scale": 1.05, "armor": true,
+		"kind": "armored", "melee_range": 26.0, "scale": 0.68, "armor": true,
 	},
 	"passaro_pedra": {
 		"hp": 2, "speed": 92.0, "touch": 1, "score": 180,
@@ -50,7 +50,7 @@ const INIMIGOS := {
 	},
 	"mae_javali": {
 		"hp": 80, "speed": 95.0, "touch": 2, "score": 5000,
-		"kind": "boss", "melee_range": 40.0, "scale": 1.7,
+		"kind": "boss", "melee_range": 40.0, "scale": 1.15,
 	},
 }
 
@@ -109,11 +109,16 @@ const FASES := {
 			{"tipo": "celeiro", "x": 4720},
 		],
 		"caixas": [
+			{"x": 210, "loot": "moedas"},
+			{"x": 360, "loot": "moedas"},
 			{"x": 520, "loot": "moedas"},
 			{"x": 1240, "loot": "fuzil"},
+			{"x": 1680, "loot": "moedas"},
 			{"x": 2100, "loot": "granadas"},
+			{"x": 2680, "loot": "moedas"},
 			{"x": 3020, "loot": "doze"},
 			{"x": 3680, "loot": "kit"},
+			{"x": 4120, "loot": "moedas"},
 		],
 		"eventos": [
 			{"id": "intro", "tipo": "dialogo", "chave": "intro", "quando": "start"},

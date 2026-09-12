@@ -63,9 +63,12 @@ func kiko_frames() -> SpriteFrames:
 		"jump_shoot": {"count": 12, "speed": 14.0},
 		"jump_shoot_fuzil": {"count": 6, "speed": 16.0},
 		"crouch": {"count": 2, "speed": 4.0},
+		"crouch_shoot": {"count": 3, "speed": 10.0},
 		"shoot": {"count": 4, "speed": 10.0},
 		"shoot_up": {"count": 3, "speed": 12.0},
 		"shoot_diag": {"count": 3, "speed": 12.0},
+		"shoot_diag_down": {"count": 3, "speed": 12.0},
+		"shoot_down": {"count": 3, "speed": 12.0},
 		"shoot_pistola": {"count": 6, "speed": 8.0},
 		"shoot_fuzil": {"count": 6, "speed": 16.0},
 		"shoot_doze": {"count": 7, "speed": 10.0, "loop": false},
@@ -117,7 +120,17 @@ func fx(name: String) -> Texture2D:
 
 
 func tile(name: String) -> Texture2D:
-	return tex("res://assets/tiles/%s.png" % name)
+	var path := "res://assets/tiles/%s.png" % name
+	if cache.has(path):
+		return cache[path]
+	var img := Image.load_from_file(ProjectSettings.globalize_path(path))
+	if img == null or img.get_width() <= 0:
+		img = Image.new()
+		if img.load(path) != OK or img.get_width() <= 0:
+			return tex(path)
+	var created := ImageTexture.create_from_image(img)
+	cache[path] = created
+	return created
 
 
 func ui(name: String) -> Texture2D:
