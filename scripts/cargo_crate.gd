@@ -94,7 +94,7 @@ func _land() -> void:
 		var p := preload("res://scenes/pickup.tscn").instantiate()
 		p.global_position = global_position + Vector2(0, -6)
 		match loot:
-			"fuzil", "doze", "sniper", "granadas", "kit", "seringa", "municao":
+			"fuzil", "doze", "sniper", "granadas", "kit", "seringa", "municao", "comida":
 				p.setup(loot)
 			_:
 				p.setup("coin")

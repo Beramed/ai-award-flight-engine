@@ -302,6 +302,8 @@ func take_hit(amount: int, knock := Vector2.ZERO) -> void:
 	velocity += knock * 0.35
 	hit_flash = 0.12
 	modulate = Color(1.35, 0.85, 0.85)
+	if is_in_group("boss"):
+		ArcadeFX.shake(5.0, 0.14)
 	if anim.sprite_frames and anim.sprite_frames.has_animation("hit") and not airborne:
 		anim.play("hit")
 	if hp <= 0:
@@ -330,7 +332,9 @@ func _die() -> void:
 		death = "die"
 	anim.play(death)
 	var data := Roteiro.inimigo(enemy_id)
-	GameState.add_score(int(data.get("score", 100)))
+	var pts := int(data.get("score", 100))
+	GameState.add_score(pts)
+	ArcadeFX.score_pop(global_position, pts)
 	GameState.add_kill_rage(is_in_group("boss"))
 	GameState.add_coins(5)
 	collision_layer = 0

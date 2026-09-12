@@ -13,6 +13,7 @@ config/icon="res://icon.svg"
 Roteiro="*res://scripts/roteiro.gd"
 GameState="*res://scripts/game_state.gd"
 SpriteLib="*res://scripts/sprite_library.gd"
+ArcadeFX="*res://scripts/arcade_fx.gd"
 
 [display]
 window/size/viewport_width=480

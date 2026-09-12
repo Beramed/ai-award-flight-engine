@@ -8,6 +8,7 @@ signal score_changed(value: int)
 signal rage_changed(value: float, maximum: float)
 signal ammo_changed(id: String, value: int)
 signal portrait_changed(kind: String)
+signal pow_changed(value: int)
 
 enum Difficulty { EASY, MEDIUM, HARD }
 
@@ -34,6 +35,8 @@ var grenades: int = 8
 var paused_by_dialog: bool = false
 var stage_cleared: bool = false
 var waiting_rebind: String = ""
+var pow_rescued: int = 0
+var awaiting_continue: bool = false
 
 var ammo := {
 	"pistola": -1,
@@ -89,6 +92,8 @@ func reset_run() -> void:
 	current_weapon = "pistola"
 	stage_cleared = false
 	waiting_rebind = ""
+	pow_rescued = 0
+	awaiting_continue = false
 	ammo = {"pistola": -1, "fuzil": 180, "doze": 24, "sniper": 0}
 	owned = {"pistola": true, "fuzil": true, "doze": true, "sniper": false}
 	_emit_all()
@@ -199,6 +204,17 @@ func add_score(n: int) -> void:
 	score_changed.emit(score)
 
 
+func rescue_pow() -> void:
+	pow_rescued += 1
+	pow_changed.emit(pow_rescued)
+
+
+func drop_weapon_id() -> String:
+	if current_weapon == "pistola":
+		return ""
+	return current_weapon
+
+
 func add_rage(n: float) -> void:
 	rage = clamp(rage + n, 0.0, MAX_RAGE)
 	rage_changed.emit(rage, MAX_RAGE)
@@ -290,6 +306,7 @@ func _emit_all() -> void:
 	rage_changed.emit(rage, MAX_RAGE)
 	ammo_changed.emit(current_weapon, ammo[current_weapon])
 	portrait_changed.emit(portrait)
+	pow_changed.emit(pow_rescued)
 
 
 func _bind_actions() -> void:
