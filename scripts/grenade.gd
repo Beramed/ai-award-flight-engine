@@ -20,7 +20,7 @@ func _physics_process(delta: float) -> void:
 		_explode()
 		return
 	life -= delta
-	rotation += delta * 10.0
+	rotation += delta * 2.2
 	if life <= 0.0:
 		_explode()
 

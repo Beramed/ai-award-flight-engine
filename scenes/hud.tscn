@@ -14,33 +14,18 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Hp" type="HBoxContainer" parent="Root"]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 200.0
-offset_bottom = 28.0
-theme_override_constants/separation = 2
-
 [node name="Stage" type="Label" parent="Root"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 28.0
-offset_right = 400.0
-offset_bottom = 44.0
-theme_override_font_sizes/font_size = 10
+offset_left = 250.0
+offset_top = 4.0
+offset_right = 476.0
+offset_bottom = 18.0
+theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.95, 0.82, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
 text = "FASE 1"
-
-[node name="Info" type="Label" parent="Root"]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 250.0
-offset_right = 470.0
-offset_bottom = 266.0
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.9, 0.9, 0.85, 1)
-text = "VIDAS 3"
+horizontal_alignment = 2
 
 [node name="GO" type="Label" parent="Root"]
 layout_mode = 1

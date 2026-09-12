@@ -4,13 +4,17 @@ signal lives_changed(value: int)
 signal hp_changed(value: int, maximum: int)
 signal weapon_changed(id: String)
 signal coins_changed(value: int)
+signal score_changed(value: int)
 signal rage_changed(value: float, maximum: float)
 signal ammo_changed(id: String, value: int)
+signal portrait_changed(kind: String)
 
 enum Difficulty { EASY, MEDIUM, HARD }
 
-const MAX_HP := 8
+const MAX_HP := 3
 const MAX_RAGE := 100.0
+const RAGE_PER_KILL := 20.0
+const RAGE_PER_BOSS := 50.0
 
 var difficulty: int = Difficulty.MEDIUM
 var starting_lives: int = 3
@@ -21,7 +25,9 @@ var player_count: int = 1
 var lives: int = 3
 var hp: int = MAX_HP
 var coins: int = 0
+var score: int = 0
 var rage: float = 0.0
+var portrait := "base"
 var has_vest: bool = false
 var current_weapon: String = "pistola"
 var grenades: int = 8
@@ -75,7 +81,9 @@ func reset_run() -> void:
 	continues_left = max_continues
 	hp = MAX_HP
 	coins = 0
-	rage = 20.0
+	score = 0
+	rage = 0.0
+	portrait = "base"
 	grenades = 8
 	has_vest = false
 	current_weapon = "pistola"
@@ -168,9 +176,7 @@ func refill_ammo() -> void:
 
 func heal_full() -> void:
 	hp = MAX_HP
-	rage = min(MAX_RAGE, rage + MAX_RAGE * 0.5)
 	hp_changed.emit(hp, MAX_HP)
-	rage_changed.emit(rage, MAX_RAGE)
 
 
 func add_coins(n: int) -> void:
@@ -178,9 +184,33 @@ func add_coins(n: int) -> void:
 	coins_changed.emit(coins)
 
 
+func add_score(n: int) -> void:
+	score += n
+	score_changed.emit(score)
+
+
 func add_rage(n: float) -> void:
 	rage = clamp(rage + n, 0.0, MAX_RAGE)
 	rage_changed.emit(rage, MAX_RAGE)
+
+
+func clear_rage() -> void:
+	if rage == 0.0:
+		rage_changed.emit(rage, MAX_RAGE)
+		return
+	rage = 0.0
+	rage_changed.emit(rage, MAX_RAGE)
+
+
+func add_kill_rage(boss: bool = false) -> void:
+	add_rage(RAGE_PER_BOSS if boss else RAGE_PER_KILL)
+
+
+func set_portrait(kind: String) -> void:
+	if portrait == kind:
+		return
+	portrait = kind
+	portrait_changed.emit(kind)
 
 
 func cycle_weapon() -> void:
@@ -217,27 +247,28 @@ func consume_grenade() -> bool:
 	return true
 
 
-func hit_player(amount: int = 1) -> bool:
+func hit_player(_amount: int = 1) -> bool:
 	if has_vest:
 		has_vest = false
 		return false
-	hp -= amount
+	clear_rage()
+	hp = max(0, hp - 1)
 	hp_changed.emit(hp, MAX_HP)
-	if hp <= 0:
-		lose_life()
-		return true
-	return false
+	return hp <= 0
 
 
 func lose_life() -> void:
 	lives -= 1
-	lives_changed.emit(lives)
-	hp = MAX_HP
-	current_weapon = "pistola"
-	hp_changed.emit(hp, MAX_HP)
-	weapon_changed.emit(current_weapon)
 	if lives < 0:
 		lives = 0
+	lives_changed.emit(lives)
+	current_weapon = "pistola"
+	weapon_changed.emit(current_weapon)
+
+
+func refill_hp() -> void:
+	hp = MAX_HP
+	hp_changed.emit(hp, MAX_HP)
 
 
 func _emit_all() -> void:
@@ -245,8 +276,10 @@ func _emit_all() -> void:
 	hp_changed.emit(hp, MAX_HP)
 	weapon_changed.emit(current_weapon)
 	coins_changed.emit(coins)
+	score_changed.emit(score)
 	rage_changed.emit(rage, MAX_RAGE)
 	ammo_changed.emit(current_weapon, ammo[current_weapon])
+	portrait_changed.emit(portrait)
 
 
 func _bind_actions() -> void:

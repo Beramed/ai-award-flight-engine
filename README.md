@@ -4,7 +4,7 @@
 
 Não precisa do Godot nem do `.bat`. Baixe este arquivo e dê **dois cliques**:
 
-**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/kiko-real-sprites-44a0/KikoWildFuryMatajava.exe**
+**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/hud-rage-44a0/KikoWildFuryMatajava.exe**
 
 No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
@@ -40,7 +40,9 @@ python3 tools/slice_kiko_sheet.py
 | Atirar (golpe pesado se o inimigo estiver perto) | J / X |
 | Granada | G / C |
 | Trocar arma (revólver / metralhadora / espingarda) | Q / Tab |
-| Rage | R / Shift |
+| Rage (barra azul cheia) | R / Shift |
+
+Vida: **3 hits**. Cada hit tira 33% da barra laranja e zera a **RAGE**. A RAGE sobe ao matar inimigos. HUD no topo (vida / vidas / score), armas e munição na base.
 
 ## Fonte da verdade
 
