@@ -184,6 +184,7 @@ func _ai_enter(delta: float) -> void:
 		if ferry:
 			_ai_ferry_exit()
 			return
+		# Birds keep entering until they cross the edge, then hunt.
 	else:
 		if not is_on_floor():
 			velocity.y += GRAVITY * delta
@@ -372,8 +373,8 @@ func _die() -> void:
 	anim.play(death)
 	if hurtbox:
 		hurtbox.set_pose(ArcadeHitbox.Pose.DEAD)
-		hurtbox.monitoring = false
-		hurtbox.monitorable = false
+		hurtbox.set_deferred("monitoring", false)
+		hurtbox.set_deferred("monitorable", false)
 	var data := Roteiro.inimigo(enemy_id)
 	var pts := int(data.get("score", 100))
 	GameState.add_score(pts)
