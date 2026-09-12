@@ -1,11 +1,19 @@
 # Kiko: Wild Fury - Matajava
 
-Projeto Godot 4 próprio (run and gun estilo Metal Slug). Esta pasta **é a raiz do jogo** — não fica dentro do `ai-award-flight-engine`.
+## Jogar no Windows (executável)
 
-## Abrir no Godot
+Não precisa do Godot. Baixe e dê dois cliques:
+
+**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/megadrive-rom-44a0/dist/pc/KikoWildFuryMatajava.exe**
+
+Arquivo no repo: `dist/pc/KikoWildFuryMatajava.exe`
+
+O SmartScreen do Windows pode avisar (o `.exe` não é assinado): **Mais informações → Executar assim mesmo**.
+
+## Abrir no Godot (opcional)
 
 1. Instale o [Godot 4.4+](https://godotengine.org/download).
-2. Importe `project.godot` (ou use `JOGAR.bat` no Windows).
+2. Importe `project.godot`.
 3. Pressione Enter na tela inicial para a Fase 1.
 
 ## Controles
