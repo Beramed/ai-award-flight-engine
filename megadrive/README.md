@@ -36,11 +36,11 @@ Atalho típico no teclado do RetroArch: setas, `Z`/`X`/`A` = A/B/C, `Enter` = St
 
 ## O que tem nesta ROM
 
-- Tela **PRESS START** e menu 1P / 2P / Options (Fácil, Normal, Difícil)
+- Tela **PRESS START** com o pôster do Godot e menu 1P / 2P / Options
+- Sprites, tiles e caixas copiados de `assets/frames` e `assets/tiles` (mesma pixel art do Godot)
+- Hitboxes iguais às do Godot: Kiko 14×32, javali 28×18, melee 38×28 à frente
 - Fase 1 com scroll só para a frente, arenas com LOCK e **GO!**
-- Javalis corredores, saltadores e blindados
-- Chefe **Mãe Javali**
-- Caixas de vida, diálogo do roteiro, continues
+- Javalis corredores, saltadores, blindados e chefe **Mãe Javali**
 
 ## Controles
 

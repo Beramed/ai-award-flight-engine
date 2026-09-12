@@ -3,13 +3,42 @@
 
 #define SCREEN_W        320
 #define SCREEN_H        224
-#define GROUND_Y        176
+#define GROUND_Y        192
 #define WORLD_W         2560
 #define MAX_PLAYERS     2
 #define MAX_ENEMIES     10
 #define MAX_BULLETS     12
 #define MAX_FX          6
 #define MAX_CRATES      4
+
+#define KIKO_W          48
+#define KIKO_H          48
+#define KIKO_HB_W       14
+#define KIKO_HB_H       32
+#define KIKO_HB_CROUCH  22
+
+#define JAVALI_W        72
+#define JAVALI_H        40
+#define JAVALI_HB_W     28
+#define JAVALI_HB_H     18
+
+#define BOSS_W          72
+#define BOSS_H          40
+#define BOSS_HB_W       40
+#define BOSS_HB_H       24
+
+#define CRATE_W         32
+#define CRATE_H         32
+#define CRATE_HB_W      24
+#define CRATE_HB_H      24
+
+#define BULLET_W        16
+#define BULLET_H        8
+#define BULLET_HB_W     8
+#define BULLET_HB_H     4
+
+#define MELEE_W         38
+#define MELEE_H         28
 
 #define ANIM_IDLE       0
 #define ANIM_WALK       1
@@ -98,6 +127,10 @@ typedef struct {
     bool alive;
 } Crate;
 
+typedef struct {
+    s16 x, y, w, h;
+} HitBox;
+
 static u8 state;
 static u8 menu_sel;
 static u8 players_n;
@@ -166,6 +199,84 @@ static void hide_sprite(Sprite *s)
 static void show_sprite(Sprite *s)
 {
     if (s) SPR_setVisibility(s, VISIBLE);
+}
+
+static bool box_hit(HitBox a, HitBox b)
+{
+    return (a.x < b.x + b.w) && (a.x + a.w > b.x) &&
+           (a.y < b.y + b.h) && (a.y + a.h > b.y);
+}
+
+static HitBox player_body(Player *p)
+{
+    HitBox b;
+    b.w = KIKO_HB_W;
+    b.h = (p->anim == ANIM_CROUCH) ? KIKO_HB_CROUCH : KIKO_HB_H;
+    b.x = p->x + ((KIKO_W - b.w) >> 1);
+    b.y = p->y + (KIKO_H - b.h);
+    return b;
+}
+
+static HitBox player_melee(Player *p)
+{
+    HitBox body = player_body(p);
+    HitBox m;
+    m.w = MELEE_W;
+    m.h = MELEE_H;
+    m.y = body.y + ((body.h - m.h) >> 1);
+    if (p->facing_left) m.x = body.x - m.w + 4;
+    else m.x = body.x + body.w - 4;
+    return m;
+}
+
+static HitBox enemy_body(Enemy *e)
+{
+    s16 sw = (e->kind == EN_BOSS) ? BOSS_W : JAVALI_W;
+    s16 sh = (e->kind == EN_BOSS) ? BOSS_H : JAVALI_H;
+    HitBox b;
+    b.w = (e->kind == EN_BOSS) ? BOSS_HB_W : JAVALI_HB_W;
+    b.h = (e->kind == EN_BOSS) ? BOSS_HB_H : JAVALI_HB_H;
+    b.x = e->x + ((sw - b.w) >> 1);
+    b.y = e->y + (sh - b.h);
+    return b;
+}
+
+static HitBox bullet_body(Bullet *b)
+{
+    HitBox r;
+    r.w = BULLET_HB_W;
+    r.h = BULLET_HB_H;
+    r.x = b->x + ((BULLET_W - r.w) >> 1);
+    r.y = b->y + ((BULLET_H - r.h) >> 1);
+    return r;
+}
+
+static HitBox crate_body(Crate *c)
+{
+    HitBox r;
+    r.w = CRATE_HB_W;
+    r.h = CRATE_HB_H;
+    r.x = c->x + ((CRATE_W - r.w) >> 1);
+    r.y = c->y + (CRATE_H - r.h);
+    return r;
+}
+
+static s16 kiko_feet_y(void)
+{
+    return GROUND_Y - KIKO_H;
+}
+
+static s16 enemy_feet_y(s16 kind)
+{
+    return GROUND_Y - ((kind == EN_BOSS) ? BOSS_H : JAVALI_H);
+}
+
+static void force_ui_colors(void)
+{
+    PAL_setColor(0, RGB24_TO_VDPCOLOR(0x0B1020));
+    PAL_setColor(15, RGB24_TO_VDPCOLOR(0xF2C14E));
+    PAL_setColor(48 + 15, RGB24_TO_VDPCOLOR(0xF2F0E4));
+    VDP_setBackgroundColor(0);
 }
 
 static s16 world_to_sx(s16 x)
@@ -346,7 +457,7 @@ static void spawn_enemy(s16 kind, s16 x, s16 facing)
             e->alive = TRUE;
             e->kind = kind;
             e->x = x;
-            e->y = (kind == EN_BOSS) ? (GROUND_Y - 32) : (GROUND_Y - 24);
+            e->y = enemy_feet_y(kind);
             e->vx = 0;
             e->vy = 0;
             e->hp = enemy_hp(kind);
@@ -401,15 +512,14 @@ static void hurt_player(Player *p, s16 dmg)
 static void fire_or_melee(Player *p, bool p2)
 {
     u16 i;
-    bool melee = FALSE;
+    HitBox melee = player_melee(p);
+    bool did_melee = FALSE;
     for (i = 0; i < MAX_ENEMIES; i++) {
         if (!en[i].alive) continue;
-        s16 dx = en[i].x - p->x;
-        if (dx < 0) dx = -dx;
-        if (dx < 28 && abs(en[i].y - p->y) < 28) {
-            melee = TRUE;
+        if (box_hit(melee, enemy_body(&en[i]))) {
+            did_melee = TRUE;
             en[i].hp -= (p->rage ? 4 : 2);
-            spawn_fx(en[i].x, en[i].y - 4);
+            spawn_fx(en[i].x + 20, en[i].y + 8);
             set_player_anim(p, ANIM_MELEE);
             p->melee_cd = 12;
             if (en[i].hp <= 0) kill_enemy(&en[i]);
@@ -417,9 +527,12 @@ static void fire_or_melee(Player *p, bool p2)
             break;
         }
     }
-    if (!melee) {
+    if (!did_melee) {
+        HitBox body = player_body(p);
         s16 dir = p->facing_left ? -1 : 1;
-        spawn_bullet(p->x + dir * 18, p->y + 12, dir, p2);
+        s16 mx = p->facing_left ? (body.x - 6) : (body.x + body.w);
+        s16 my = body.y + 8;
+        spawn_bullet(mx, my, dir, p2);
         set_player_anim(p, ANIM_SHOOT);
         p->shoot_cd = 8;
     }
@@ -439,7 +552,7 @@ static void update_player(Player *p, u8 idx)
                 p->hp = p->hp_max;
                 p->invuln = 80;
                 p->x = cam_x + 40;
-                p->y = GROUND_Y - 32;
+                p->y = kiko_feet_y();
                 set_player_anim(p, ANIM_IDLE);
             } else {
                 p->alive = FALSE;
@@ -495,17 +608,17 @@ static void update_player(Player *p, u8 idx)
     p->vy += 1;
     if (p->vy > 8) p->vy = 8;
     p->y += p->vy;
-    if (p->y >= GROUND_Y - 32) {
-        p->y = GROUND_Y - 32;
+    if (p->y >= kiko_feet_y()) {
+        p->y = kiko_feet_y();
         p->vy = 0;
         p->on_ground = TRUE;
     } else p->on_ground = FALSE;
 
     if (p->x < cam_x + 4) p->x = cam_x + 4;
-    if (p->x > WORLD_W - 40) p->x = WORLD_W - 40;
+    if (p->x > WORLD_W - KIKO_W) p->x = WORLD_W - KIKO_W;
     if (camera_locked) {
         if (p->x < lock_left) p->x = lock_left;
-        if (p->x > lock_right - 32) p->x = lock_right - 32;
+        if (p->x > lock_right - KIKO_W) p->x = lock_right - KIKO_W;
     }
 
     SPR_setHFlip(p->spr, p->facing_left);
@@ -514,9 +627,8 @@ static void update_player(Player *p, u8 idx)
     else show_sprite(p->spr);
 
     p->timer++;
-    if ((p->anim == ANIM_WALK || p->anim == ANIM_RAGE) && (p->timer & 5) == 0) {
-        p->frame++;
-        SPR_setFrame(p->spr, p->frame);
+    if ((p->anim == ANIM_WALK || p->anim == ANIM_RAGE) && (p->timer % 5) == 0) {
+        SPR_nextFrame(p->spr);
     }
     (void)idx;
 }
@@ -536,8 +648,8 @@ static void update_enemies(void)
         if (e->kind == EN_BOSS) {
             e->ai++;
             if ((e->ai % 180) < 70) e->vx = e->facing_left ? -3 : 3;
-            else if ((e->ai % 180) < 90) {
-                if (e->y >= GROUND_Y - 32) e->vy = -10;
+            else             if ((e->ai % 180) < 90) {
+                if (e->y >= enemy_feet_y(EN_BOSS)) e->vy = -10;
                 e->vx = 0;
                 SPR_setAnim(e->spr, 2);
             } else {
@@ -559,8 +671,8 @@ static void update_enemies(void)
         e->vy += 1;
         if (e->vy > 7) e->vy = 7;
         e->y += e->vy;
-        if (e->y >= ((e->kind == EN_BOSS) ? GROUND_Y - 32 : GROUND_Y - 24)) {
-            e->y = (e->kind == EN_BOSS) ? GROUND_Y - 32 : GROUND_Y - 24;
+        if (e->y >= enemy_feet_y(e->kind)) {
+            e->y = enemy_feet_y(e->kind);
             e->vy = 0;
         }
         SPR_setHFlip(e->spr, !e->facing_left);
@@ -568,11 +680,8 @@ static void update_enemies(void)
 
         for (p = 0; p < players_n; p++) {
             if (!pl[p].alive || pl[p].hp <= 0) continue;
-            s16 dx = pl[p].x - e->x;
-            s16 dy = pl[p].y - e->y;
-            if (dx < 0) dx = -dx;
-            if (dy < 0) dy = -dy;
-            if (dx < 22 && dy < 22) hurt_player(&pl[p], (e->kind == EN_BOSS) ? 2 : 1);
+            if (box_hit(player_body(&pl[p]), enemy_body(e)))
+                hurt_player(&pl[p], (e->kind == EN_BOSS) ? 2 : 1);
         }
     }
 }
@@ -591,14 +700,8 @@ static void update_bullets(void)
         SPR_setPosition(bu[i].spr, world_to_sx(bu[i].x), bu[i].y);
         for (j = 0; j < MAX_ENEMIES; j++) {
             if (!en[j].alive) continue;
-            s16 dx = bu[i].x - en[j].x;
-            s16 dy = bu[i].y - (en[j].y + 8);
-            if (dx < 0) dx = -dx;
-            if (dy < 0) dy = -dy;
-            if (dx < 22 && dy < 18) {
-                s16 dmg = 1;
-                if (en[j].kind == EN_ARMORED) dmg = 1;
-                if (pl[bu[i].from_p2 ? 1 : 0].rage) dmg = 2;
+            if (box_hit(bullet_body(&bu[i]), enemy_body(&en[j]))) {
+                s16 dmg = (pl[bu[i].from_p2 ? 1 : 0].rage) ? 2 : 1;
                 en[j].hp -= dmg;
                 bu[i].alive = FALSE;
                 hide_sprite(bu[i].spr);
@@ -742,10 +845,11 @@ static void start_stage(void)
     PAL_setPalette(PAL1, kiko_sprite.palette->data, CPU);
     PAL_setPalette(PAL2, javali_sprite.palette->data, CPU);
     PAL_setPalette(PAL3, pal_stage.data, CPU);
+    force_ui_colors();
 
     VDP_loadTileSet(&tileset_stage, TILE_USER_INDEX, DMA);
     VDP_setScrollingMode(HSCROLL_PLANE, VSCROLL_PLANE);
-    SPR_init();
+    SPR_initEx(480);
     reset_entities();
     fill_visible_map(0);
     {
@@ -766,8 +870,8 @@ static void start_stage(void)
     for (i = 0; i < players_n; i++) {
         Player *p = &pl[i];
         p->alive = TRUE;
-        p->x = 48 + i * 36;
-        p->y = GROUND_Y - 32;
+        p->x = 48 + i * 40;
+        p->y = kiko_feet_y();
         p->vx = 0;
         p->vy = 0;
         p->hp_max = (difficulty == DIFF_HARD) ? 6 : 8;
@@ -786,9 +890,9 @@ static void start_stage(void)
         SPR_setAnim(p->spr, ANIM_IDLE);
     }
 
-    cr[0].alive = TRUE; cr[0].x = 520; cr[0].y = GROUND_Y - 32;
-    cr[1].alive = TRUE; cr[1].x = 1240; cr[1].y = GROUND_Y - 32;
-    cr[2].alive = TRUE; cr[2].x = 2100; cr[2].y = GROUND_Y - 32;
+    cr[0].alive = TRUE; cr[0].x = 520; cr[0].y = GROUND_Y - CRATE_H;
+    cr[1].alive = TRUE; cr[1].x = 1240; cr[1].y = GROUND_Y - CRATE_H;
+    cr[2].alive = TRUE; cr[2].x = 2100; cr[2].y = GROUND_Y - CRATE_H;
     for (i = 0; i < 3; i++) {
         cr[i].spr = SPR_addSprite(&crate_sprite, world_to_sx(cr[i].x), cr[i].y, TILE_ATTR(PAL2, TRUE, FALSE, FALSE));
     }
@@ -809,10 +913,11 @@ static void enter_title(void)
     clear_text();
     VDP_setBackgroundColor(0);
     PAL_setPalette(PAL0, img_title.palette->data, CPU);
-    VDP_drawImageEx(BG_A, &img_title, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, TILE_USER_INDEX), 5, 3, FALSE, TRUE);
+    force_ui_colors();
+    VDP_drawImageEx(BG_A, &img_title, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, TILE_USER_INDEX), 8, 1, FALSE, TRUE);
     VDP_setTextPalette(PAL0);
-    VDP_drawText("A FAZENDA TOMADA", 12, 16);
-    VDP_drawText("MEGA DRIVE / GENESIS", 10, 18);
+    VDP_drawText("A FAZENDA TOMADA", 12, 12);
+    VDP_drawText("MEGA DRIVE / GENESIS", 10, 14);
     state = ST_TITLE;
     menu_sel = 0;
     hud_timer = 0;
@@ -825,6 +930,7 @@ static void enter_menu(void)
     VDP_clearPlane(BG_B, TRUE);
     clear_text();
     PAL_setPalette(PAL0, pal_stage.data, CPU);
+    force_ui_colors();
     VDP_setBackgroundColor(0);
     VDP_setTextPalette(PAL0);
     VDP_drawText("KIKO WILD FURY - MATAJAVA", 7, 4);
@@ -890,8 +996,8 @@ static bool any_player_alive(void)
 static void tick_title(u16 joy, u16 changed)
 {
     hud_timer++;
-    if ((hud_timer / 24) & 1) VDP_drawText("PRESS START", 14, 20);
-    else VDP_drawText("           ", 14, 20);
+    if ((hud_timer / 24) & 1) VDP_drawText("PRESS START", 14, 16);
+    else VDP_drawText("           ", 14, 16);
     if (changed & (BUTTON_START | BUTTON_A | BUTTON_C)) enter_menu();
     (void)joy;
 }
@@ -959,7 +1065,7 @@ static void tick_play(u16 joy, u16 changed)
         u8 p;
         for (p = 0; p < players_n; p++) {
             if (!pl[p].alive) continue;
-            if (abs(pl[p].x - cr[i].x) < 20 && abs(pl[p].y - cr[i].y) < 20) {
+            if (box_hit(player_body(&pl[p]), crate_body(&cr[i]))) {
                 cr[i].alive = FALSE;
                 hide_sprite(cr[i].spr);
                 score += 200;
