@@ -45,7 +45,7 @@ func _ready() -> void:
 	anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	anim.centered = true
 	scale = Vector2(BODY_SCALE, BODY_SCALE)
-	if OS.get_environment("KIKO_CAPTURE") != "":
+	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
 		Engine.max_fps = 60
 
 
@@ -61,7 +61,7 @@ func _physics_process(delta: float) -> void:
 		if not is_on_floor():
 			velocity.y += GRAVITY * delta
 		move_and_slide()
-		if OS.get_environment("KIKO_CAPTURE") != "":
+		if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
 			_run_capture()
 		return
 
@@ -134,11 +134,14 @@ func _physics_process(delta: float) -> void:
 		muzzle.position = Vector2(24 * facing, -34)
 	$Melee/CollisionShape2D.position.x = 24 * facing
 	$Melee/CollisionShape2D.position.y = -8
-	if OS.get_environment("KIKO_CAPTURE") != "":
+	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
 		_run_capture()
 
 
 func _run_capture() -> void:
+	if OS.get_environment("KIKO_DEMO") == "1":
+		_run_aim_demo()
+		return
 	_capture_frames += 1
 	var cap := OS.get_environment("KIKO_CAPTURE")
 	if _capture_frames < 16:
@@ -230,6 +233,31 @@ func _run_capture() -> void:
 		take_hit(1, Vector2(-10, -20))
 	elif _capture_frames == 288:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_death.png")
+
+
+func _run_aim_demo() -> void:
+	_capture_frames += 1
+	if _capture_frames == 2:
+		GameState.current_weapon = "fuzil"
+		GameState.grenades = max(GameState.grenades, 4)
+		DisplayServer.window_set_size(Vector2i(1440, 810))
+	if _capture_frames < 24:
+		velocity.x = SPEED
+		return
+	if _capture_frames == 24:
+		Input.action_press(_ia("aim_up"))
+		Input.action_press(_ia("shoot"))
+	elif _capture_frames == 120:
+		Input.action_press(_ia("move_right"))
+	elif _capture_frames == 220:
+		Input.action_release(_ia("aim_up"))
+		Input.action_release(_ia("shoot"))
+		Input.action_release(_ia("move_right"))
+		_throw_grenade()
+	elif _capture_frames == 300:
+		for node in get_tree().get_nodes_in_group("grenades"):
+			if node.has_method("_explode"):
+				node._explode()
 
 
 func _update_aim() -> void:
