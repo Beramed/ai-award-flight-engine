@@ -8,7 +8,14 @@ Não precisa do Godot nem do `.bat`. Baixe este arquivo e dê **dois cliques**:
 
 No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
-O SmartScreen do Windows pode avisar (o `.exe` não é assinado): **Mais informações → Executar assim mesmo**.
+O executável está identificado como **Beramed / Kiko Wild Fury Matajava** (não como Godot). Mesmo assim o Windows pode mostrar o SmartScreen na primeira vez, porque o arquivo **não tem certificado pago de assinatura**:
+
+1. Clique em **Mais informações**
+2. Clique em **Executar assim mesmo**
+
+Isso não é vírus. Sem um certificado Authenticode (DigiCert, Sectigo ou Azure Trusted Signing) o Windows trata qualquer `.exe` novo de desenvolvedor independente como “aplicativo não reconhecido”. Não desligue o Defender.
+
+Depois da primeira execução o aviso costuma parar neste computador.
 
 Na abertura: **Enter**, **Espaço** ou **clique** começa a Fase 1. Também há botões **1 JOGADOR**, **2 JOGADORES** e **OPÇÕES**.
 
