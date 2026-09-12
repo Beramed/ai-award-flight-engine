@@ -20,9 +20,13 @@ func setup(p_dir: Vector2, p_speed: float, p_damage: int, p_piercing: bool, weap
 			if spr.texture == null:
 				spr.texture = SpriteLib.fx("bullet")
 		"fuzil":
-			spr.texture = SpriteLib.fx("bullet_heavy")
+			spr.texture = SpriteLib.fx("bullet_fuzil")
+			if spr.texture == null:
+				spr.texture = SpriteLib.fx("bullet_heavy")
 		"doze":
-			spr.texture = SpriteLib.fx("bullet")
+			spr.texture = SpriteLib.fx("pellet_doze")
+			if spr.texture == null:
+				spr.texture = SpriteLib.fx("bullet")
 		"sniper":
 			spr.texture = SpriteLib.fx("bullet_sniper")
 		_:
