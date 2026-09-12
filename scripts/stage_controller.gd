@@ -123,13 +123,17 @@ func _run_rescue(ev: Dictionary) -> void:
 func _spawn_pack(pack: Array) -> void:
 	for item in pack:
 		var info: Dictionary = item
-		var id := String(info.get("id", "javali_corredor"))
+		var id := String(info.get("id", "javali_investida"))
 		var node: Node2D
 		if bool(info.get("boss", false)) or id == "mae_javali":
 			node = preload("res://scenes/boss_mae_javali.tscn").instantiate()
 		else:
 			node = preload("res://scenes/enemy.tscn").instantiate()
-		node.global_position = Vector2(float(info.get("x", 400)), ground_y - 18)
+		var data := Roteiro.inimigo(id)
+		var y := ground_y - 18.0
+		if bool(data.get("airborne", false)):
+			y = ground_y - (118.0 if String(data.get("kind", "")) == "bird" else 102.0)
+		node.global_position = Vector2(float(info.get("x", 400)), y)
 		add_child(node)
 		node.setup(id, int(info.get("facing", -1)))
 
@@ -168,35 +172,53 @@ func _spawn_hud() -> void:
 
 func _build_world() -> void:
 	var width := float(data.get("largura", 5600))
-	var sky := Sprite2D.new()
-	sky.texture = SpriteLib.tile("sky")
-	sky.centered = false
-	sky.position = Vector2.ZERO
-	sky.z_index = -20
-	sky.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	add_child(sky)
-	var sky2 := sky.duplicate()
-	sky2.position.x = 480
-	add_child(sky2)
+	var panorama := SpriteLib.tile("fazenda_panorama")
+	if panorama:
+		var bg := Sprite2D.new()
+		bg.texture = panorama
+		bg.centered = false
+		bg.position = Vector2.ZERO
+		bg.z_index = -8
+		bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		var tex_w := float(panorama.get_width())
+		var tex_h := float(panorama.get_height())
+		if tex_w > 0.0 and tex_h > 0.0:
+			bg.scale = Vector2(width / tex_w, 270.0 / tex_h)
+		add_child(bg)
+	else:
+		var sky := Sprite2D.new()
+		sky.texture = SpriteLib.tile("sky")
+		sky.centered = false
+		sky.position = Vector2.ZERO
+		sky.z_index = -20
+		sky.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		add_child(sky)
+		var sky2 := sky.duplicate()
+		sky2.position.x = 480
+		add_child(sky2)
 
-	_static_rect(Rect2(0, ground_y, width, 40), SpriteLib.tile("grass"))
-	for x in range(0, int(width), 32):
-		var g := Sprite2D.new()
-		g.texture = SpriteLib.tile("grass")
-		g.centered = false
-		g.position = Vector2(x, ground_y)
-		g.z_index = -2
-		g.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		add_child(g)
-		var d := Sprite2D.new()
-		d.texture = SpriteLib.tile("dirt")
-		d.centered = false
-		d.position = Vector2(x, ground_y + 32)
-		d.z_index = -3
-		d.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		add_child(d)
+	_static_rect(Rect2(0, ground_y, width, 40))
+	if panorama == null:
+		for x in range(0, int(width), 32):
+			var g := Sprite2D.new()
+			g.texture = SpriteLib.tile("grass")
+			g.centered = false
+			g.position = Vector2(x, ground_y)
+			g.z_index = -2
+			g.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			add_child(g)
+			var d := Sprite2D.new()
+			d.texture = SpriteLib.tile("dirt")
+			d.centered = false
+			d.position = Vector2(x, ground_y + 32)
+			d.z_index = -3
+			d.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			add_child(d)
 
 	for prop in data.get("props", []):
+		var tipo := String(prop.get("tipo", ""))
+		if panorama and tipo in ["celeiro", "celeiro_fogo", "milho", "cerca", "silo"]:
+			continue
 		_spawn_prop(prop)
 	for box in data.get("caixas", []):
 		var crate := preload("res://scenes/crate.tscn").instantiate()

@@ -19,7 +19,7 @@ func take_hit(_amount: int, _knock := Vector2.ZERO) -> void:
 	var p := preload("res://scenes/pickup.tscn").instantiate()
 	p.global_position = global_position + Vector2(0, -6)
 	match loot:
-		"fuzil", "doze", "sniper", "granadas", "kit":
+		"fuzil", "doze", "sniper", "granadas", "kit", "seringa":
 			p.setup(loot)
 		_:
 			p.setup("coin")

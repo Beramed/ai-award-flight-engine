@@ -58,7 +58,7 @@ func make_sprite_frames(folder: String, mapping: Dictionary, speed := 10.0) -> S
 func kiko_frames() -> SpriteFrames:
 	return make_sprite_frames("kiko", {
 		"idle": {"count": 4, "speed": 5.0},
-		"walk": {"count": 6, "speed": 10.0},
+		"walk": {"count": 7, "speed": 11.0},
 		"jump": {"count": 6, "speed": 10.0},
 		"jump_shoot": {"count": 12, "speed": 14.0},
 		"jump_shoot_fuzil": {"count": 6, "speed": 16.0},
@@ -85,13 +85,30 @@ func kiko_frames() -> SpriteFrames:
 func javali_frames() -> SpriteFrames:
 	return make_sprite_frames("javali", {
 		"run": {"count": 4, "speed": 10.0},
-		"charge": {"count": 3, "speed": 12.0},
+		"charge": {"count": 10, "speed": 14.0},
+		"throw": {"count": 6, "speed": 10.0},
 		"jump": {"count": 2, "speed": 8.0},
-		"die": {"count": 1, "loop": false},
+		"die": {"count": 2, "loop": false, "speed": 8.0},
+		"die_forward": {"count": 10, "loop": false, "speed": 12.0},
+		"die_flip": {"count": 8, "loop": false, "speed": 12.0},
 		"blindado": {"count": 3, "speed": 8.0},
 		"boss_idle": {"count": 2, "speed": 4.0},
 		"boss_charge": {"count": 3, "speed": 10.0},
 		"boss_jump": {"count": 2, "speed": 8.0},
+	})
+
+
+func passaro_frames() -> SpriteFrames:
+	return make_sprite_frames("passaro", {
+		"fly": {"count": 10, "speed": 12.0},
+		"drop": {"count": 8, "speed": 12.0, "loop": false},
+	})
+
+
+func drone_frames() -> SpriteFrames:
+	return make_sprite_frames("drone", {
+		"fly": {"count": 10, "speed": 10.0},
+		"drop": {"count": 8, "speed": 10.0, "loop": false},
 	})
 
 

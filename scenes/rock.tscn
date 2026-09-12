@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/rock.gd" id="1_rock"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 5.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hurt"]
+radius = 7.0
+
+[node name="Rock" type="CharacterBody2D"]
+collision_layer = 8
+collision_mask = 1
+script = ExtResource("1_rock")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture_filter = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_body")
+
+[node name="Hurt" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurt"]
+shape = SubResource("CircleShape2D_hurt")
+
+[connection signal="body_entered" from="Hurt" to="." method="_on_hurt_body_entered"]
