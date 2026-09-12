@@ -7,7 +7,7 @@ func tex(path: String) -> Texture2D:
 	if cache.has(path):
 		return cache[path]
 	if ResourceLoader.exists(path):
-		var loaded = load(path)
+		var loaded = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
 		if loaded is Texture2D:
 			cache[path] = loaded
 			return loaded
@@ -121,7 +121,18 @@ func tile(name: String) -> Texture2D:
 
 
 func ui(name: String) -> Texture2D:
-	return tex("res://assets/ui/%s.png" % name)
+	var path := "res://assets/ui/%s.png" % name
+	if cache.has(path):
+		return cache[path]
+	# Load the PNG itself so a replaced portrait is not stuck on a stale .ctex.
+	var img := Image.load_from_file(ProjectSettings.globalize_path(path))
+	if img == null or img.get_width() <= 0:
+		img = Image.new()
+		if img.load(path) != OK or img.get_width() <= 0:
+			return tex(path)
+	var created := ImageTexture.create_from_image(img)
+	cache[path] = created
+	return created
 
 
 func sheet(name: String) -> Texture2D:

@@ -62,7 +62,14 @@ func _show_line() -> void:
 	else:
 		portrait.visible = false
 	if index == 0 and OS.get_environment("KIKO_CAPTURE") != "":
-		get_tree().create_timer(0.08).timeout.connect(_save_dialog_shot, CONNECT_ONE_SHOT)
+		_capture_dialog_after_draw()
+
+
+func _capture_dialog_after_draw() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	_save_dialog_shot()
 
 
 func _save_dialog_shot() -> void:

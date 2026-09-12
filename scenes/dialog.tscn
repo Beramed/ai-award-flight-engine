@@ -24,7 +24,7 @@ offset_right = 86.0
 offset_bottom = 88.0
 expand_mode = 1
 stretch_mode = 5
-texture_filter = 0
+texture_filter = 1
 
 [node name="Speaker" type="Label" parent="Panel"]
 layout_mode = 0
