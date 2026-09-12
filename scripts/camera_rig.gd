@@ -10,7 +10,7 @@ func _ready() -> void:
 	enabled = true
 	make_current()
 	position_smoothing_enabled = true
-	position_smoothing_speed = 8.0
+	position_smoothing_speed = 8.0  # ~0.08 lerp feel, no teleport/jitter
 	limit_top = 0
 	limit_bottom = 270
 	limit_left = 0
