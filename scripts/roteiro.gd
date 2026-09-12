@@ -215,6 +215,7 @@ const FASES := {
 				]},
 			{"id": "resgate_fe", "tipo": "resgate", "quando": "x", "x": 3220,
 				"quem": "fernanda", "chave": "fernanda", "bonus": "municao"},
+			{"id": "loja_mineiro", "tipo": "loja", "quando": "x", "x": 3240},
 			{"id": "drones_lavoura", "tipo": "spawn", "quando": "x", "x": 3260,
 				"inimigos": [
 					{"id": "drone_carga", "x": 3400, "facing": -1, "loot": "municao"},
