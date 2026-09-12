@@ -17,6 +17,8 @@ var cam: StageCamera
 var hud: HUD
 var dialog: DialogUI
 var shop: Node
+var shop_zone: Area2D
+var shop_hint: Label
 var ground_y := 236.0
 var _chunks: Dictionary = {}
 const CHUNK_W := 640.0
@@ -48,6 +50,7 @@ func boot(numero: int) -> void:
 
 func _process(_delta: float) -> void:
 	_stream_chunks()
+	_poll_shop_door()
 	if GameState.paused_by_dialog or waiting_arena or busy:
 		return
 	_advance_by_x()
@@ -134,10 +137,8 @@ func _run_event(ev: Dictionary) -> void:
 		"resgate":
 			await _run_rescue(ev)
 		"loja":
-			if OS.get_environment("KIKO_MAPSHOT") != "":
-				return
-			if shop:
-				await shop.call("open")
+			# Door in the world: press up to enter. Do not auto-pause the stage.
+			return
 		"vitoria":
 			GameState.stage_cleared = true
 			stage_cleared.emit()
@@ -245,6 +246,7 @@ func _build_world() -> void:
 		_spawn_prop(prop)
 	for box in data.get("caixas", []):
 		_breakable("crate", float(box.get("x", 0)), String(box.get("loot", "moedas")))
+	_spawn_shop_door(2580.0)
 	_left_wall()
 
 
@@ -383,6 +385,7 @@ func _low_rock(x: float) -> void:
 		spr.texture = tex
 		spr.centered = false
 		spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		spr.modulate = Color(0.62, 0.48, 0.32, 1)
 		spr.z_index = 1
 		body.add_child(spr)
 		w = float(tex.get_width())
@@ -453,6 +456,67 @@ func _static_rect(rect: Rect2, tex: Texture2D = null) -> void:
 func _left_wall() -> void:
 	_static_rect(Rect2(-24, 0, 24, 270))
 	_static_rect(Rect2(float(data.get("largura", 5600)), 0, 24, 270))
+
+
+func _spawn_shop_door(x: float) -> void:
+	var zone := Area2D.new()
+	zone.name = "ShopDoor"
+	zone.collision_layer = 0
+	zone.collision_mask = 2
+	zone.monitoring = true
+	var col := CollisionShape2D.new()
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(86, 90)
+	col.shape = shape
+	col.position = Vector2(x, ground_y - 40)
+	zone.add_child(col)
+	add_child(zone)
+	shop_zone = zone
+
+	var board := ColorRect.new()
+	board.color = Color(0.18, 0.11, 0.06, 0.95)
+	board.size = Vector2(52, 18)
+	board.position = Vector2(x - 26, ground_y - 78)
+	board.z_index = 11
+	add_child(board)
+	var title := Label.new()
+	title.text = "LOJA"
+	title.position = Vector2(x - 24, ground_y - 80)
+	title.z_index = 12
+	title.add_theme_font_size_override("font_size", 10)
+	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.25, 1))
+	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	title.add_theme_constant_override("outline_size", 4)
+	add_child(title)
+
+	shop_hint = Label.new()
+	shop_hint.text = "W / CIMA : ENTRAR"
+	shop_hint.position = Vector2(x - 48, ground_y - 96)
+	shop_hint.z_index = 12
+	shop_hint.visible = false
+	shop_hint.add_theme_font_size_override("font_size", 8)
+	shop_hint.add_theme_color_override("font_color", Color(1.0, 0.95, 0.55, 1))
+	shop_hint.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	shop_hint.add_theme_constant_override("outline_size", 3)
+	add_child(shop_hint)
+
+
+func _poll_shop_door() -> void:
+	if shop == null or shop_zone == null:
+		return
+	if bool(shop.get("active")):
+		if shop_hint:
+			shop_hint.visible = false
+		return
+	var inside := false
+	for b in shop_zone.get_overlapping_bodies():
+		if b.is_in_group("player"):
+			inside = true
+			break
+	if shop_hint:
+		shop_hint.visible = inside
+	if inside and Input.is_action_just_pressed("aim_up"):
+		shop.call("force_open")
 
 
 func _spawn_blockers(left: float, right: float) -> void:
