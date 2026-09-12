@@ -71,7 +71,7 @@ func _paint() -> void:
 	var ammo_txt := "INF" if ammo_val < 0 else str(ammo_val)
 	info.text = "VIDAS %d   ARMA %s  MUN %s   GRANADAS %d   MOEDAS %d   RAGE %d%%" % [
 		max(GameState.lives, 0),
-		GameState.current_weapon.to_upper(),
+		String(GameState.weapon_stats[GameState.current_weapon].get("label", GameState.current_weapon)).to_upper(),
 		ammo_txt,
 		GameState.grenades,
 		GameState.coins,

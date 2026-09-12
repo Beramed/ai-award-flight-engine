@@ -31,25 +31,37 @@ var waiting_rebind: String = ""
 
 var ammo := {
 	"pistola": -1,
-	"fuzil": 0,
-	"doze": 0,
+	"fuzil": 180,
+	"doze": 24,
 	"sniper": 0,
 }
 
 var owned := {
 	"pistola": true,
-	"fuzil": false,
-	"doze": false,
+	"fuzil": true,
+	"doze": true,
 	"sniper": false,
 }
 
 var weapon_order := ["pistola", "fuzil", "doze", "sniper"]
 
 var weapon_stats := {
-	"pistola": {"damage": 1, "cooldown": 0.16, "speed": 320.0, "spread": 0, "pellets": 1, "piercing": false},
-	"fuzil": {"damage": 1, "cooldown": 0.08, "speed": 380.0, "spread": 2, "pellets": 1, "piercing": false},
-	"doze": {"damage": 1, "cooldown": 0.42, "speed": 280.0, "spread": 14, "pellets": 5, "piercing": false},
-	"sniper": {"damage": 4, "cooldown": 0.55, "speed": 520.0, "spread": 0, "pellets": 1, "piercing": true},
+	"pistola": {
+		"damage": 3, "cooldown": 0.48, "speed": 390.0, "spread": 1, "pellets": 1,
+		"piercing": false, "life": 1.7, "scale": 2.2, "label": "REVOLVER",
+	},
+	"fuzil": {
+		"damage": 1, "cooldown": 0.07, "speed": 420.0, "spread": 3, "pellets": 1,
+		"piercing": false, "life": 1.15, "scale": 1.0, "label": "METRALHADORA",
+	},
+	"doze": {
+		"damage": 1, "cooldown": 0.58, "speed": 250.0, "spread": 20, "pellets": 7,
+		"piercing": false, "life": 0.28, "scale": 0.85, "label": "ESPINGARDA",
+	},
+	"sniper": {
+		"damage": 4, "cooldown": 0.55, "speed": 520.0, "spread": 0, "pellets": 1,
+		"piercing": true, "life": 2.0, "scale": 1.2, "label": "SNIPER",
+	},
 }
 
 
@@ -69,8 +81,8 @@ func reset_run() -> void:
 	current_weapon = "pistola"
 	stage_cleared = false
 	waiting_rebind = ""
-	ammo = {"pistola": -1, "fuzil": 0, "doze": 0, "sniper": 0}
-	owned = {"pistola": true, "fuzil": false, "doze": false, "sniper": false}
+	ammo = {"pistola": -1, "fuzil": 180, "doze": 24, "sniper": 0}
+	owned = {"pistola": true, "fuzil": true, "doze": true, "sniper": false}
 	_emit_all()
 
 

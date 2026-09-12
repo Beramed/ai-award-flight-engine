@@ -105,20 +105,49 @@ func _physics_process(delta: float) -> void:
 	_play_anim(x)
 	move_and_slide()
 	_clamp_camera_left()
-	muzzle.position = Vector2(34 * facing, -18 if not crouching else -12)
+	muzzle.position = Vector2(36 * facing, -20 if not crouching else -14)
 	if aim.y < -0.4:
-		muzzle.position = Vector2(10 * facing, -36)
+		muzzle.position = Vector2(12 * facing, -36)
+	if not is_on_floor():
+		muzzle.position = Vector2(36 * facing, -22)
 	$Melee/CollisionShape2D.position.x = 24 * facing
 	$Melee/CollisionShape2D.position.y = -8
 	if OS.get_environment("KIKO_CAPTURE") != "":
 		_capture_frames += 1
-		if _capture_frames < 24:
+		var cap := OS.get_environment("KIKO_CAPTURE")
+		if _capture_frames < 16:
 			velocity.x = SPEED
 			anim.play("walk")
-		if _capture_frames == 24:
-			get_viewport().get_texture().get_image().save_png(
-				OS.get_environment("KIKO_CAPTURE") + "/stage_kiko_sprite.png"
-			)
+		elif _capture_frames == 16:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_walk.png")
+		elif _capture_frames < 34:
+			GameState.current_weapon = "pistola"
+			_shoot()
+			anim.play("shoot_pistola")
+		elif _capture_frames == 34:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_revolver.png")
+		elif _capture_frames < 52:
+			GameState.current_weapon = "fuzil"
+			_shoot()
+			anim.play("shoot_fuzil")
+		elif _capture_frames == 52:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_fuzil.png")
+		elif _capture_frames < 70:
+			GameState.current_weapon = "doze"
+			_shoot()
+			anim.play("shoot_doze")
+		elif _capture_frames == 70:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_shotgun.png")
+			velocity.y = JUMP_VELOCITY
+		elif _capture_frames < 88:
+			GameState.current_weapon = "fuzil"
+			_shoot()
+			anim.play("jump_shoot_fuzil")
+		elif _capture_frames == 88:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_jump_shoot.png")
+			anim.play("melee")
+		elif _capture_frames == 94:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_melee.png")
 
 
 func _update_aim() -> void:
@@ -154,17 +183,17 @@ func _enemy_in_melee() -> bool:
 	for body in melee_box.get_overlapping_bodies():
 		if body.is_in_group("enemies"):
 			var dx: float = body.global_position.x - global_position.x
-			if sign(dx) == facing or abs(dx) < 12.0:
+			if sign(dx) == facing or abs(dx) < 18.0:
 				return true
 	return false
 
 
 func _do_melee() -> void:
-	melee_t = 0.22
+	melee_t = 0.34
 	anim.play("rage" if rage_t > 0.0 else "melee")
 	for body in melee_box.get_overlapping_bodies():
 		if body.has_method("take_hit"):
-			body.take_hit(3 if rage_t > 0.0 else 2, Vector2(facing * 180, -40))
+			body.take_hit(4 if rage_t > 0.0 else 3, Vector2(facing * 200, -50))
 	GameState.add_rage(2.0)
 
 
@@ -175,7 +204,7 @@ func _shoot() -> void:
 	if not GameState.consume_shot():
 		return
 	shoot_cd = stats["cooldown"]
-	anim.play("shoot_up" if aim.y < -0.5 else "shoot")
+	anim.play(_shoot_anim_name())
 	var pellets: int = stats["pellets"]
 	for i in pellets:
 		var spread := deg_to_rad(stats["spread"]) * (i - (pellets - 1) / 2.0)
@@ -186,10 +215,30 @@ func _shoot() -> void:
 	GameState.add_rage(0.4)
 
 
+func _shoot_anim_name() -> String:
+	var weapon := GameState.current_weapon
+	var air := not is_on_floor()
+	if air:
+		if weapon == "fuzil":
+			return "jump_shoot_fuzil"
+		return "jump_shoot"
+	if weapon == "pistola":
+		return "shoot_pistola"
+	if weapon == "fuzil":
+		return "shoot_fuzil"
+	if weapon == "doze":
+		return "shoot_doze"
+	if aim.y < -0.5:
+		return "shoot_up"
+	return "shoot"
+
+
 func _spawn_bullet(dir: Vector2, stats: Dictionary) -> void:
 	var b := preload("res://scenes/bullet.tscn").instantiate()
 	b.global_position = muzzle.global_position
 	b.setup(dir, stats["speed"], stats["damage"], stats["piercing"], GameState.current_weapon)
+	b.life = float(stats.get("life", 1.4))
+	b.apply_scale_factor(float(stats.get("scale", 1.0)))
 	get_tree().current_scene.add_child(b)
 
 
@@ -248,17 +297,17 @@ func _die() -> void:
 
 
 func _play_anim(x: float) -> void:
-	if melee_t > 0.0 or anim.animation in ["hurt", "death"] and anim.is_playing():
+	if melee_t > 0.0 or (anim.animation in ["hurt", "death"] and anim.is_playing()):
 		return
 	if rage_t > 0.0 and Input.is_action_pressed(_ia("shoot")):
 		anim.play("rage")
 		return
-	if not is_on_floor():
+	if Input.is_action_pressed(_ia("shoot")):
+		anim.play(_shoot_anim_name())
+	elif not is_on_floor():
 		anim.play("jump")
 	elif crouching:
 		anim.play("crouch")
-	elif Input.is_action_pressed(_ia("shoot")):
-		anim.play("shoot_up" if aim.y < -0.5 else "shoot")
 	elif abs(x) > 0.1:
 		anim.play("walk")
 	else:

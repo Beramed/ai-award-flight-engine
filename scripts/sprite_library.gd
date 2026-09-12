@@ -58,11 +58,16 @@ func make_sprite_frames(folder: String, mapping: Dictionary, speed := 10.0) -> S
 func kiko_frames() -> SpriteFrames:
 	return make_sprite_frames("kiko", {
 		"idle": {"count": 4, "speed": 5.0},
-		"walk": {"count": 14, "speed": 12.0},
-		"jump": {"count": 3, "speed": 8.0},
+		"walk": {"count": 6, "speed": 10.0},
+		"jump": {"count": 6, "speed": 10.0},
+		"jump_shoot": {"count": 12, "speed": 14.0},
+		"jump_shoot_fuzil": {"count": 6, "speed": 16.0},
 		"crouch": {"count": 2, "speed": 4.0},
 		"shoot": {"count": 4, "speed": 10.0},
 		"shoot_up": {"count": 2, "speed": 10.0},
+		"shoot_pistola": {"count": 6, "speed": 8.0},
+		"shoot_fuzil": {"count": 6, "speed": 16.0},
+		"shoot_doze": {"count": 5, "speed": 10.0, "loop": false},
 		"melee": {"count": 3, "speed": 12.0, "loop": false},
 		"rage": {"count": 4, "speed": 10.0},
 		"hurt": {"count": 2, "loop": false, "speed": 8.0},
