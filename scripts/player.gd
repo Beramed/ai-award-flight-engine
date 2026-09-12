@@ -45,6 +45,8 @@ func _ready() -> void:
 	anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	anim.centered = true
 	scale = Vector2(BODY_SCALE, BODY_SCALE)
+	if OS.get_environment("KIKO_CAPTURE") != "":
+		Engine.max_fps = 60
 
 
 func _ia(action: String) -> String:
@@ -193,44 +195,40 @@ func _run_capture() -> void:
 	elif _capture_frames == 106:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_melee_shotgun.png")
 		GameState.current_weapon = "fuzil"
-		aim = Vector2(0, -1)
-		facing = 1
-		anim.flip_h = false
-	elif _capture_frames < 122:
-		aim = Vector2(0, -1)
-		_shoot()
-		anim.play("shoot_up")
-		muzzle.position = Vector2(2, -42)
-	elif _capture_frames == 122:
+		Input.action_press(_ia("aim_up"))
+		Input.action_press(_ia("shoot"))
+	elif _capture_frames == 121:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_up.png")
-		aim = Vector2(1, -1).normalized()
-	elif _capture_frames < 138:
-		aim = Vector2(1, -1).normalized()
-		_shoot()
-		anim.play("shoot_diag")
-		muzzle.position = Vector2(24, -34)
-	elif _capture_frames == 138:
+		Input.action_press(_ia("move_right"))
+	elif _capture_frames == 137:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_diag.png")
+		Input.action_release(_ia("aim_up"))
+		Input.action_release(_ia("shoot"))
+		Input.action_release(_ia("move_right"))
 		GameState.grenades = max(GameState.grenades, 2)
 		_throw_grenade()
 	elif _capture_frames == 155:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_grenade_throw.png")
-	elif _capture_frames == 200:
+	elif _capture_frames == 210:
+		for node in get_tree().get_nodes_in_group("grenades"):
+			if node.has_method("_explode"):
+				node._explode()
+	elif _capture_frames == 228:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_grenade_boom.png")
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_grenade.png")
 		GameState.rage = 80.0
 		GameState.rage_changed.emit(GameState.rage, GameState.MAX_RAGE)
 		invuln = 0.0
 		take_hit(1, Vector2(-40, -60))
-	elif _capture_frames == 210:
+	elif _capture_frames == 238:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_hurt.png")
 		invuln = 0.0
 		take_hit(1, Vector2(-20, -40))
-	elif _capture_frames == 222:
+	elif _capture_frames == 250:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_hurt2.png")
 		invuln = 0.0
 		take_hit(1, Vector2(-10, -20))
-	elif _capture_frames == 260:
+	elif _capture_frames == 288:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_death.png")
 
 

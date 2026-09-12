@@ -10,6 +10,7 @@ var boom_frames: Array[Texture2D] = []
 
 
 func setup(impulse: Vector2) -> void:
+	add_to_group("grenades")
 	velocity = impulse
 	fly_frames = SpriteLib.frames("fx", "grenade_fly", 4)
 	if fly_frames.is_empty():
