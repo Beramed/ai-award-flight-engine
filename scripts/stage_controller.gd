@@ -227,7 +227,7 @@ func _build_world() -> void:
 		_spawn_prop(prop)
 	for box in data.get("caixas", []):
 		var crate := preload("res://scenes/crate.tscn").instantiate()
-		crate.global_position = Vector2(float(box.get("x", 0)), ground_y - 8)
+		crate.global_position = Vector2(float(box.get("x", 0)), ground_y - 10)
 		add_child(crate)
 		crate.setup(String(box.get("loot", "moedas")))
 	_left_wall()
