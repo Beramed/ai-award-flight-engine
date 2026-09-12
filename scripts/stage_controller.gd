@@ -77,6 +77,8 @@ func _run_event(ev: Dictionary) -> void:
 	var tipo := String(ev.get("tipo", ""))
 	match tipo:
 		"dialogo":
+			if OS.get_environment("KIKO_CAPTURE") != "":
+				return
 			await dialog.play(Roteiro.dialogo(stage_number, String(ev.get("chave", ""))))
 		"spawn":
 			_spawn_pack(ev.get("inimigos", []))

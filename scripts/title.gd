@@ -47,6 +47,12 @@ func _ready() -> void:
 	$PressCatch.pressed.connect(_on_press_start)
 	_show(Screen.PRESS_START)
 	_refresh_options()
+	if OS.get_environment("KIKO_CAPTURE") != "":
+		await RenderingServer.frame_post_draw
+		await get_tree().create_timer(0.25).timeout
+		get_viewport().get_texture().get_image().save_png(
+			OS.get_environment("KIKO_CAPTURE") + "/title_full_poster.png"
+		)
 
 
 func _process(delta: float) -> void:

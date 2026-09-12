@@ -39,6 +39,11 @@ func _ready() -> void:
 	anim.sprite_frames = SpriteLib.kiko_frames()
 	anim.play("idle")
 	anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if OS.get_environment("KIKO_CAPTURE") != "":
+		await get_tree().create_timer(0.45).timeout
+		get_viewport().get_texture().get_image().save_png(
+			OS.get_environment("KIKO_CAPTURE") + "/stage_kiko_sprite.png"
+		)
 
 
 func _ia(action: String) -> String:
@@ -74,12 +79,12 @@ func _physics_process(delta: float) -> void:
 		x = 0.0
 		var crouch_shape := col.shape as RectangleShape2D
 		if crouch_shape:
-			crouch_shape.size = Vector2(14, 22)
-		col.position.y = 5
+			crouch_shape.size = Vector2(18, 26)
+		col.position.y = 8
 	else:
 		var stand_shape := col.shape as RectangleShape2D
 		if stand_shape:
-			stand_shape.size = Vector2(14, 32)
+			stand_shape.size = Vector2(18, 42)
 		col.position.y = 0
 
 	if x != 0.0:
@@ -104,10 +109,11 @@ func _physics_process(delta: float) -> void:
 	_play_anim(x)
 	move_and_slide()
 	_clamp_camera_left()
-	muzzle.position = Vector2(16 * facing, -6 if not crouching else 4)
+	muzzle.position = Vector2(34 * facing, -18 if not crouching else -12)
 	if aim.y < -0.4:
-		muzzle.position = Vector2(4 * facing, -20)
-	$Melee/CollisionShape2D.position.x = 16 * facing
+		muzzle.position = Vector2(10 * facing, -36)
+	$Melee/CollisionShape2D.position.x = 24 * facing
+	$Melee/CollisionShape2D.position.y = -8
 
 
 func _update_aim() -> void:

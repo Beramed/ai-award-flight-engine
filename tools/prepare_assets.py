@@ -237,7 +237,7 @@ def gen_tiles() -> None:
 
 
 def main() -> None:
-    gen_kiko()
+    # Kiko vem da sprite sheet em tools/slice_kiko_sheet.py — não sobrescrever.
     gen_javali()
     gen_fx()
     gen_tiles()

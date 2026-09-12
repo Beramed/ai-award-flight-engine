@@ -57,16 +57,18 @@ func make_sprite_frames(folder: String, mapping: Dictionary, speed := 10.0) -> S
 
 func kiko_frames() -> SpriteFrames:
 	return make_sprite_frames("kiko", {
-		"idle": {"count": 4, "speed": 6.0},
-		"walk": {"count": 8, "speed": 12.0},
-		"jump": {"count": 2, "speed": 8.0},
-		"crouch": {"count": 1, "speed": 1.0, "loop": false},
-		"shoot": {"count": 2, "speed": 14.0},
-		"shoot_up": {"count": 2, "speed": 14.0},
-		"melee": {"count": 3, "speed": 16.0, "loop": false},
-		"rage": {"count": 3, "speed": 16.0},
-		"hurt": {"count": 1, "loop": false},
-		"death": {"count": 1, "loop": false},
+		"idle": {"count": 4, "speed": 5.0},
+		"walk": {"count": 14, "speed": 12.0},
+		"jump": {"count": 3, "speed": 8.0},
+		"crouch": {"count": 2, "speed": 4.0},
+		"shoot": {"count": 4, "speed": 10.0},
+		"shoot_up": {"count": 2, "speed": 10.0},
+		"melee": {"count": 3, "speed": 12.0, "loop": false},
+		"rage": {"count": 4, "speed": 10.0},
+		"hurt": {"count": 2, "loop": false, "speed": 8.0},
+		"death": {"count": 2, "loop": false, "speed": 4.0},
+		"climb": {"count": 1, "loop": true, "speed": 6.0},
+		"victory": {"count": 1, "loop": true, "speed": 1.0},
 	})
 
 

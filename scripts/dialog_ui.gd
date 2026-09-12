@@ -10,6 +10,7 @@ var active := false
 @onready var speaker: Label = $Panel/Speaker
 @onready var body: Label = $Panel/Body
 @onready var hint: Label = $Panel/Hint
+@onready var portrait: TextureRect = $Panel/Portrait
 
 
 func _ready() -> void:
@@ -48,6 +49,17 @@ func _show_line() -> void:
 	speaker.text = Roteiro.speaker_name(who)
 	body.text = String(line.get("text", ""))
 	hint.text = "Z / ENTER — continuar  %d/%d" % [index + 1, lines.size()]
+	var portrait_name := ""
+	match who:
+		Roteiro.Speaker.KIKO:
+			portrait_name = "portrait_kiko"
+		Roteiro.Speaker.SAMURAI:
+			portrait_name = "portrait_samurai"
+	if portrait_name != "":
+		portrait.texture = SpriteLib.ui(portrait_name)
+		portrait.visible = true
+	else:
+		portrait.visible = false
 
 
 func _close() -> void:
