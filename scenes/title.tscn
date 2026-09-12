@@ -1,0 +1,89 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/title.gd" id="1_title"]
+
+[node name="Title" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_title")
+
+[node name="Bg" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.043, 0.063, 0.125, 1)
+
+[node name="Art" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -170.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 262.0
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.85)
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -80.0
+offset_right = 200.0
+offset_bottom = -48.0
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.95, 0.82, 0.35, 1)
+text = "KIKO: WILD FURY"
+horizontal_alignment = 1
+
+[node name="Sub" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -46.0
+offset_right = 200.0
+offset_bottom = -28.0
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.85, 0.35, 0.28, 1)
+text = "MATAJAVA"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = 8.0
+offset_right = 220.0
+offset_bottom = 90.0
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.86, 0.86, 0.8, 1)
+text = "FASE 1 — A FAZENDA TOMADA
+
+A/D ou setas — andar e mirar 8 direções
+W — mirar cima    S — agachar
+ESPAÇO/Z — pular    J/X — atirar (faca automática)
+G/C — granada    Q — trocar arma    R — RAGE
+
+ENTER / Z / J — começar"
+horizontal_alignment = 1
