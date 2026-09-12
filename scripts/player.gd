@@ -101,12 +101,8 @@ func _physics_process(delta: float) -> void:
 
 	var x := Input.get_axis(_ia("move_left"), _ia("move_right"))
 	var holding_down := Input.is_action_pressed(_ia("aim_down"))
-	crouching = is_on_floor() and holding_down
+	crouching = is_on_floor() and holding_down and abs(x) < 0.1
 	if crouching:
-		if abs(x) < 0.1:
-			x = 0.0
-		else:
-			x *= 0.42
 		var crouch_shape := col.shape as RectangleShape2D
 		if crouch_shape:
 			crouch_shape.size = Vector2(18, 26)
@@ -352,8 +348,8 @@ func _update_muzzle() -> void:
 		muzzle.position = Vector2(4 * facing, 22 if crouching or is_on_floor() else 16)
 	elif aim.y > 0.25:
 		muzzle.position = Vector2(22 * facing, 8)
-	$Melee/CollisionShape2D.position.x = 24 * facing
-	$Melee/CollisionShape2D.position.y = -8
+	$Melee/CollisionShape2D.position.x = 34 * facing
+	$Melee/CollisionShape2D.position.y = -4
 
 
 func _update_aim() -> void:
@@ -380,34 +376,41 @@ func _update_aim() -> void:
 func _try_attack() -> void:
 	if melee_t > 0.0 or grenade_t > 0.0:
 		return
-	if aim.y > 0.7:
-		_shoot()
-		return
-	if rage_t > 0.0 or _enemy_in_melee():
+	if _enemy_in_melee():
 		_do_melee()
 		return
 	_shoot()
 
 
 func _enemy_in_melee() -> bool:
-	for body in melee_box.get_overlapping_bodies():
-		if body.is_in_group("enemies"):
-			var dx: float = body.global_position.x - global_position.x
-			if sign(dx) == facing or abs(dx) < 18.0:
-				return true
+	var reach := 48.0
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e == null or not is_instance_valid(e):
+			continue
+		var d: Vector2 = (e as Node2D).global_position - global_position
+		if absf(d.y) > 38.0:
+			continue
+		if absf(d.x) <= reach and (signf(d.x) == float(facing) or absf(d.x) < 30.0):
+			return true
 	return false
 
 
 func _do_melee() -> void:
-	melee_t = 0.34
+	melee_t = 0.30
 	if rage_t > 0.0:
 		anim.play("rage")
 	else:
 		var key := "melee_%s" % GameState.current_weapon
 		anim.play(key if anim.sprite_frames.has_animation(key) else "melee")
-	for body in melee_box.get_overlapping_bodies():
-		if body.has_method("take_hit"):
-			body.take_hit(4 if rage_t > 0.0 else 3, Vector2(facing * 200, -50))
+	var reach := 50.0
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e == null or not is_instance_valid(e) or not e.has_method("take_hit"):
+			continue
+		var d: Vector2 = (e as Node2D).global_position - global_position
+		if absf(d.y) > 38.0:
+			continue
+		if absf(d.x) <= reach and (signf(d.x) == float(facing) or absf(d.x) < 30.0):
+			e.take_hit(4 if rage_t > 0.0 else 3, Vector2(facing * 200, -50))
 
 
 func _shoot() -> void:
@@ -591,6 +594,11 @@ func _die() -> void:
 func _play_anim(x: float) -> void:
 	if grenade_t > 0.0 or melee_t > 0.0 or (anim.animation in ["hurt", "death"] and anim.is_playing()):
 		return
+	# Moving: always cycle walk/run legs, no matter where the gun is pointed.
+	if is_on_floor() and abs(x) > 0.1:
+		anim.play("walk")
+		anim.flip_h = facing < 0
+		return
 	if rage_t > 0.0 and Input.is_action_pressed(_ia("shoot")):
 		anim.play("rage")
 		return
@@ -616,8 +624,6 @@ func _play_anim(x: float) -> void:
 		anim.play("jump")
 	elif crouching:
 		anim.play("crouch")
-	elif abs(x) > 0.1:
-		anim.play("walk")
 	else:
 		anim.play("idle")
 	anim.flip_h = facing < 0

@@ -7,7 +7,7 @@
 size = Vector2(18, 42)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_melee"]
-size = Vector2(52, 34)
+size = Vector2(88, 48)
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
@@ -24,9 +24,11 @@ shape = SubResource("RectangleShape2D_body")
 [node name="Melee" type="Area2D" parent="."]
 collision_layer = 0
 collision_mask = 4
+monitoring = true
+monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Melee"]
-position = Vector2(24, -8)
+position = Vector2(32, -4)
 shape = SubResource("RectangleShape2D_melee")
 
 [node name="Muzzle" type="Marker2D" parent="."]
