@@ -249,13 +249,16 @@ func hit_player(_amount: int = 1) -> bool:
 
 func lose_life() -> void:
 	lives -= 1
-	lives_changed.emit(lives)
-	hp = MAX_HP
-	current_weapon = "pistola"
-	hp_changed.emit(hp, MAX_HP)
-	weapon_changed.emit(current_weapon)
 	if lives < 0:
 		lives = 0
+	lives_changed.emit(lives)
+	current_weapon = "pistola"
+	weapon_changed.emit(current_weapon)
+
+
+func refill_hp() -> void:
+	hp = MAX_HP
+	hp_changed.emit(hp, MAX_HP)
 
 
 func _emit_all() -> void:

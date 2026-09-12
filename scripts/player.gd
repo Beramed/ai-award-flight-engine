@@ -121,15 +121,15 @@ func _physics_process(delta: float) -> void:
 func _run_capture() -> void:
 	_capture_frames += 1
 	var cap := OS.get_environment("KIKO_CAPTURE")
-	if _capture_frames == 10:
-		GameState.score = 24500
-		GameState.score_changed.emit(GameState.score)
-		GameState.add_rage(80.0)
-		get_viewport().get_texture().get_image().save_png(cap + "/hud_arcade.png")
-	elif _capture_frames < 16:
+	if _capture_frames < 16:
 		velocity.x = SPEED
 		anim.play("walk")
+		if _capture_frames == 14:
+			GameState.score = 24500
+			GameState.score_changed.emit(GameState.score)
+			GameState.add_rage(80.0)
 	elif _capture_frames == 16:
+		get_viewport().get_texture().get_image().save_png(cap + "/hud_arcade.png")
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_walk.png")
 	elif _capture_frames < 34:
 		GameState.current_weapon = "pistola"
@@ -183,7 +183,7 @@ func _run_capture() -> void:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_hurt2.png")
 		invuln = 0.0
 		take_hit(1, Vector2(-10, -20))
-	elif _capture_frames == 158:
+	elif _capture_frames == 175:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_death.png")
 
 
@@ -366,9 +366,9 @@ func take_hit(_amount: int = 1, knock := Vector2.ZERO) -> void:
 func _die() -> void:
 	locked = true
 	anim.play("death")
+	GameState.lose_life()
 	died.emit()
 	await get_tree().create_timer(1.25).timeout
-	GameState.lose_life()
 	if GameState.lives <= 0:
 		if GameState.use_continue():
 			global_position = spawn_point
@@ -380,6 +380,7 @@ func _die() -> void:
 	global_position = spawn_point
 	locked = false
 	invuln = 1.5
+	GameState.refill_hp()
 
 
 func _play_anim(x: float) -> void:
