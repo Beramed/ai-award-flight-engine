@@ -10,38 +10,38 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -78.0
-offset_right = -16.0
-offset_bottom = -10.0
+offset_left = 10.0
+offset_top = -96.0
+offset_right = -10.0
+offset_bottom = -8.0
 color = Color(0.05, 0.04, 0.03, 0.92)
 
 [node name="Portrait" type="TextureRect" parent="Panel"]
 layout_mode = 0
 offset_left = 6.0
-offset_top = 6.0
-offset_right = 54.0
-offset_bottom = 54.0
+offset_top = 8.0
+offset_right = 86.0
+offset_bottom = 88.0
 expand_mode = 1
 stretch_mode = 5
 texture_filter = 0
 
 [node name="Speaker" type="Label" parent="Panel"]
 layout_mode = 0
-offset_left = 62.0
-offset_top = 4.0
-offset_right = 300.0
-offset_bottom = 20.0
+offset_left = 94.0
+offset_top = 6.0
+offset_right = 430.0
+offset_bottom = 22.0
 theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.95, 0.82, 0.35, 1)
 text = "Kiko"
 
 [node name="Body" type="Label" parent="Panel"]
 layout_mode = 0
-offset_left = 62.0
-offset_top = 22.0
-offset_right = 430.0
-offset_bottom = 52.0
+offset_left = 94.0
+offset_top = 24.0
+offset_right = 448.0
+offset_bottom = 72.0
 theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.95, 0.95, 0.92, 1)
 autowrap_mode = 3
