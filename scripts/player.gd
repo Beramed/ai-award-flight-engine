@@ -126,6 +126,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = JUMP_VELOCITY
 
 	_update_aim()
+	_update_muzzle()
 
 	if Input.is_action_just_pressed("weapon_next") and player_index == 0:
 		GameState.cycle_weapon()
@@ -139,19 +140,6 @@ func _physics_process(delta: float) -> void:
 	_play_anim(x)
 	move_and_slide()
 	_clamp_camera_left()
-	muzzle.position = Vector2(36 * facing, -20 if not crouching else -10)
-	if not is_on_floor():
-		muzzle.position = Vector2(36 * facing, -22)
-	if aim.y < -0.85:
-		muzzle.position = Vector2(2 * facing, -42)
-	elif aim.y < -0.25:
-		muzzle.position = Vector2(24 * facing, -34)
-	elif aim.y > 0.85:
-		muzzle.position = Vector2(4 * facing, 22 if crouching or is_on_floor() else 16)
-	elif aim.y > 0.25:
-		muzzle.position = Vector2(22 * facing, 8)
-	$Melee/CollisionShape2D.position.x = 24 * facing
-	$Melee/CollisionShape2D.position.y = -8
 	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
 		_run_capture()
 
@@ -283,19 +271,26 @@ func _run_feature_capture() -> bool:
 		GameState.coins = 240
 		GameState.coins_changed.emit(GameState.coins)
 		z_index = 6
+		var stage := get_parent()
+		if stage:
+			stage.set("busy", true)
+			stage.set("event_i", 999)
+		for node in get_tree().get_nodes_in_group("enemies"):
+			node.queue_free()
 	elif f == 14:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_house_front.png")
 		Input.action_press(_ia("aim_down"))
 		Input.action_press(_ia("shoot"))
-		GameState.current_weapon = "fuzil"
-	elif f == 28:
+		GameState.current_weapon = "pistola"
+	elif f == 18:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_down.png")
+	elif f == 24:
 		Input.action_release(_ia("aim_down"))
 		Input.action_release(_ia("shoot"))
 		var shop := get_tree().get_first_node_in_group("shop_ui")
 		if shop and shop.has_method("force_open"):
 			shop.force_open()
-	elif f == 44:
+	elif f == 40:
 		get_viewport().get_texture().get_image().save_png(cap + "/shop_mineiro.png")
 		var shop2 := get_tree().get_first_node_in_group("shop_ui")
 		if shop2 and shop2.has_method("close"):
@@ -303,7 +298,7 @@ func _run_feature_capture() -> bool:
 		global_position = spawn_point
 		_feature_capture_done = true
 		_capture_frames = 0
-	return not _feature_capture_done or f <= 44
+	return not _feature_capture_done or f <= 40
 
 
 func ground_y_ref() -> float:
@@ -345,6 +340,22 @@ func _spawn_capture_enemy(id: String, offset: Vector2, face: int) -> void:
 	e.setup(id, face)
 
 
+func _update_muzzle() -> void:
+	muzzle.position = Vector2(36 * facing, -20 if not crouching else -10)
+	if not is_on_floor():
+		muzzle.position = Vector2(36 * facing, -22)
+	if aim.y < -0.85:
+		muzzle.position = Vector2(2 * facing, -42)
+	elif aim.y < -0.25:
+		muzzle.position = Vector2(24 * facing, -34)
+	elif aim.y > 0.85:
+		muzzle.position = Vector2(4 * facing, 22 if crouching or is_on_floor() else 16)
+	elif aim.y > 0.25:
+		muzzle.position = Vector2(22 * facing, 8)
+	$Melee/CollisionShape2D.position.x = 24 * facing
+	$Melee/CollisionShape2D.position.y = -8
+
+
 func _update_aim() -> void:
 	var up := Input.is_action_pressed(_ia("aim_up"))
 	var down := Input.is_action_pressed(_ia("aim_down"))
@@ -368,6 +379,9 @@ func _update_aim() -> void:
 
 func _try_attack() -> void:
 	if melee_t > 0.0 or grenade_t > 0.0:
+		return
+	if aim.y > 0.7:
+		_shoot()
 		return
 	if rage_t > 0.0 or _enemy_in_melee():
 		_do_melee()
@@ -408,9 +422,9 @@ func _shoot() -> void:
 	if GameState.current_weapon in ["pistola", "doze"] or randf() < 0.35:
 		_spawn_casing()
 	var pellets: int = stats["pellets"]
-	var straight_down := aim.y > 0.85 and abs(aim.x) < 0.15
+	var straight_down: bool = aim.y > 0.85 and absf(aim.x) < 0.15
 	for i in pellets:
-		var dir := Vector2(0, 1) if straight_down else aim.rotated(deg_to_rad(stats["spread"]) * (i - (pellets - 1) / 2.0))
+		var dir: Vector2 = Vector2(0, 1) if straight_down else aim.rotated(deg_to_rad(float(stats["spread"])) * (i - (pellets - 1) / 2.0))
 		if dir == Vector2.ZERO:
 			dir = Vector2(facing, 0)
 		_spawn_bullet(dir.normalized(), stats)
@@ -484,6 +498,8 @@ func _spawn_muzzle_fx() -> void:
 			flash.scale = Vector2(0.32, 0.32)
 		_:
 			flash.scale = Vector2(0.58, 0.58)
+	if aim.y > 0.85:
+		flash.scale *= 1.45
 	add_child(flash)
 	var tw := create_tween()
 	tw.tween_interval(0.06)

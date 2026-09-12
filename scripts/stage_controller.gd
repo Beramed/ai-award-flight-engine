@@ -16,7 +16,7 @@ var player: PlayerKiko
 var cam: StageCamera
 var hud: HUD
 var dialog: DialogUI
-var shop: ShopUI
+var shop: Node
 var ground_y := 236.0
 var _chunks: Dictionary = {}
 const CHUNK_W := 640.0
@@ -137,7 +137,7 @@ func _run_event(ev: Dictionary) -> void:
 			if OS.get_environment("KIKO_MAPSHOT") != "":
 				return
 			if shop:
-				await shop.open()
+				await shop.call("open")
 		"vitoria":
 			GameState.stage_cleared = true
 			stage_cleared.emit()

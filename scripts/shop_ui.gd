@@ -46,7 +46,7 @@ func _show() -> void:
 	visible = true
 	GameState.paused_by_dialog = true
 	_refresh()
-	_status.text = "SELECIONE UM ITEM OU SAIA COM EXIT / ESC / ENTER"
+	_status.text = "ESC / ENTER"
 	_exit.grab_focus()
 
 
@@ -66,10 +66,10 @@ func _build() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(dim)
 
-	var tex := SpriteLib.ui("shop_mineiro")
-	var sc := min(470.0 / ART_W, 248.0 / ART_H)
-	var dw := ART_W * sc
-	var dh := ART_H * sc
+	var tex: Texture2D = SpriteLib.ui("shop_mineiro")
+	var sc: float = minf(470.0 / ART_W, 248.0 / ART_H)
+	var dw: float = ART_W * sc
+	var dh: float = ART_H * sc
 	_art = TextureRect.new()
 	_art.texture = tex
 	_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -110,25 +110,27 @@ func _build() -> void:
 	_coins.add_theme_constant_override("outline_size", 4)
 	add_child(_coins)
 
-	# EXIT sits BELOW the coins, over the art's lower prompt box.
+	# EXIT sits BELOW the coins, covering the art's lower prompt box.
 	var exit_bg := ColorRect.new()
-	exit_bg.color = Color(0.12, 0.1, 0.08, 1)
-	exit_bg.position = _art.position + Vector2(300.0 * sc, 416.0 * sc)
-	exit_bg.size = Vector2(272.0 * sc, 36.0 * sc)
+	exit_bg.color = Color(0.08, 0.07, 0.06, 0.96)
+	exit_bg.position = _art.position + Vector2(300.0 * sc, 414.0 * sc)
+	exit_bg.size = Vector2(272.0 * sc, 92.0 * sc)
 	add_child(exit_bg)
 	_exit = Button.new()
 	_exit.text = "EXIT"
-	_exit.position = exit_bg.position
-	_exit.size = exit_bg.size
-	_exit.add_theme_font_size_override("font_size", 14)
+	_exit.flat = true
+	_exit.position = exit_bg.position + Vector2(8, 6)
+	_exit.size = Vector2(exit_bg.size.x - 16, 34)
+	_exit.add_theme_font_size_override("font_size", 16)
 	_exit.add_theme_color_override("font_color", Color(1.0, 0.86, 0.2, 1))
 	_exit.pressed.connect(close)
 	add_child(_exit)
 
 	_status = Label.new()
-	_status.position = _art.position + Vector2(300.0 * sc, 454.0 * sc)
-	_status.size = Vector2(272.0 * sc, 28.0 * sc)
+	_status.position = exit_bg.position + Vector2(8, 42)
+	_status.size = Vector2(exit_bg.size.x - 16, 44)
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status.add_theme_font_size_override("font_size", 8)
 	_status.add_theme_color_override("font_color", Color(0.92, 0.93, 0.88, 1))
 	_status.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))

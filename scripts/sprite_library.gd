@@ -68,7 +68,7 @@ func kiko_frames() -> SpriteFrames:
 		"shoot_up": {"count": 3, "speed": 12.0},
 		"shoot_diag": {"count": 3, "speed": 12.0},
 		"shoot_diag_down": {"count": 3, "speed": 12.0},
-		"shoot_down": {"count": 5, "speed": 12.0},
+		"shoot_down": {"count": 3, "speed": 14.0},
 		"shoot_down_crouch_start": {"count": 1, "speed": 1.0, "loop": false},
 		"shoot_down_aim": {"count": 1, "speed": 1.0, "loop": false},
 		"shoot_down_fire": {"count": 1, "speed": 1.0, "loop": false},
