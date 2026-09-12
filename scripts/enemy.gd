@@ -23,6 +23,7 @@ var entry_target_x := 0.0
 var ferry := false
 var cargo = null
 var hit_flash := 0.0
+var hurtbox: ArcadeHitbox
 
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var col: CollisionShape2D = $Collision
@@ -51,6 +52,9 @@ func setup(p_id: String, p_facing: int = -1) -> void:
 	anim.flip_h = facing < 0
 	add_to_group("enemies")
 	var shape := col.shape as RectangleShape2D
+	if shape:
+		col.shape = shape.duplicate()
+	collision_mask = 1
 	if airborne:
 		collision_mask = 0
 		if shape:
@@ -70,6 +74,7 @@ func setup(p_id: String, p_facing: int = -1) -> void:
 	else:
 		anim.play("walk" if anim.sprite_frames.has_animation("walk") else "run")
 	_snap_feet()
+	_make_hurtbox()
 
 
 func _attach_cargo() -> void:
@@ -93,6 +98,40 @@ func _snap_feet() -> void:
 		tex = anim.sprite_frames.get_frame_texture(anim.animation, 0)
 	if tex:
 		anim.position.y = -float(tex.get_height()) * 0.5 + half
+
+
+func _make_hurtbox() -> void:
+	if hurtbox == null:
+		hurtbox = ArcadeHitbox.new()
+		hurtbox.name = "Hurtbox"
+		hurtbox.team = "enemy"
+		hurtbox.host = self
+		add_child(hurtbox)
+	match kind:
+		"bird":
+			hurtbox.stand_size = Vector2(16, 12)
+			hurtbox.crouch_size = Vector2(16, 12)
+			hurtbox.air_size = Vector2(16, 12)
+			hurtbox.feet_y = 6.0
+			hurtbox.set_pose(ArcadeHitbox.Pose.AIR)
+		"drone":
+			hurtbox.stand_size = Vector2(22, 14)
+			hurtbox.crouch_size = Vector2(22, 14)
+			hurtbox.air_size = Vector2(22, 14)
+			hurtbox.feet_y = 7.0
+			hurtbox.set_pose(ArcadeHitbox.Pose.AIR)
+		"boss":
+			hurtbox.stand_size = Vector2(36, 24)
+			hurtbox.crouch_size = Vector2(36, 24)
+			hurtbox.air_size = Vector2(32, 22)
+			hurtbox.feet_y = 14.0
+			hurtbox.set_pose(ArcadeHitbox.Pose.STAND)
+		_:
+			hurtbox.stand_size = Vector2(18, 16)
+			hurtbox.crouch_size = Vector2(18, 16)
+			hurtbox.air_size = Vector2(16, 14)
+			hurtbox.feet_y = 9.0
+			hurtbox.set_pose(ArcadeHitbox.Pose.STAND)
 
 
 func _physics_process(delta: float) -> void:
@@ -331,6 +370,10 @@ func _die() -> void:
 	elif anim.sprite_frames.has_animation("die"):
 		death = "die"
 	anim.play(death)
+	if hurtbox:
+		hurtbox.set_pose(ArcadeHitbox.Pose.DEAD)
+		hurtbox.monitoring = false
+		hurtbox.monitorable = false
 	var data := Roteiro.inimigo(enemy_id)
 	var pts := int(data.get("score", 100))
 	GameState.add_score(pts)
@@ -364,6 +407,8 @@ func _drop_coin() -> void:
 
 
 func _touch_player() -> void:
+	if _hurtbox_hits_player():
+		return
 	for i in get_slide_collision_count():
 		var hit := get_slide_collision(i)
 		var n := hit.get_collider()
@@ -372,9 +417,20 @@ func _touch_player() -> void:
 
 
 func _touch_distance() -> void:
+	_hurtbox_hits_player()
+
+
+func _hurtbox_hits_player() -> bool:
 	var player := _player()
-	if player and player.has_method("take_hit") and global_position.distance_to(player.global_position) < 18.0:
-		player.take_hit(touch_dmg, Vector2(0, 40))
+	if player == null or not player.has_method("take_hit"):
+		return false
+	var ph = player.get("hurtbox")
+	if hurtbox == null or ph == null or not is_instance_valid(ph):
+		return false
+	if ArcadeHitbox.overlap(hurtbox.aabb(), ph.aabb()):
+		player.take_hit(touch_dmg, Vector2(-facing * 140, -80))
+		return true
+	return false
 
 
 func _player() -> Node2D:

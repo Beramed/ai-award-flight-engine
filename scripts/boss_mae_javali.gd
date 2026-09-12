@@ -11,6 +11,7 @@ func setup(p_id: String, p_facing: int = -1) -> void:
 	kind = "boss"
 	anim.play("boss_idle")
 	add_to_group("boss")
+	_make_hurtbox()
 
 
 func _physics_process(delta: float) -> void:
