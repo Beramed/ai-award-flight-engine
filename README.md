@@ -39,3 +39,12 @@ Para regenerar os sprites de gameplay:
 ```bash
 python3 tools/prepare_assets.py
 ```
+
+## Mega Drive / Genesis
+
+Há uma ROM nativa (não é o Godot exportado) em `dist/`:
+
+- `dist/KikoWildFuryMatajava.bin` — Kega Fusion
+- `dist/KikoWildFuryMatajava.md` — RetroArch (Genesis Plus GX / PicoDrive)
+
+Controles: **A** atira, **B** pula, **C** rage, **Start** pausa. Instruções em `megadrive/README.md`.
