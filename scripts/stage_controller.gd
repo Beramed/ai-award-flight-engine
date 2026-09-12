@@ -29,9 +29,13 @@ func boot(numero: int) -> void:
 	_build_world()
 	_spawn_player()
 	_spawn_hud()
-	_make_rain()
+	if OS.get_environment("KIKO_MAPSHOT") == "":
+		_make_rain()
 	set_process(true)
 	busy = true
+	if OS.get_environment("KIKO_MAPSHOT") != "":
+		await _save_mapshots()
+		return
 	await _try_start_events()
 	busy = false
 
@@ -40,6 +44,40 @@ func _process(_delta: float) -> void:
 	if GameState.paused_by_dialog or waiting_arena or busy:
 		return
 	_advance_by_x()
+
+
+func _save_mapshots() -> void:
+	var cap := OS.get_environment("KIKO_MAPSHOT")
+	if hud:
+		hud.visible = false
+	if player:
+		player.visible = false
+	for n in get_tree().get_nodes_in_group("crates"):
+		n.visible = false
+	if cam:
+		cam.position_smoothing_enabled = false
+		cam.drag_horizontal_enabled = false
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var spots := [
+		[120.0, "start"],
+		[1280.0, "farm"],
+		[2400.0, "lake"],
+		[3300.0, "fields"],
+		[4300.0, "approach"],
+		[5300.0, "arena"],
+	]
+	for spot in spots:
+		if player:
+			player.global_position = Vector2(float(spot[0]), ground_y - 20.0)
+		if cam:
+			cam.reset_smoothing()
+			cam.force_update_scroll()
+		await get_tree().process_frame
+		await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("%s/map_%s.png" % [cap, String(spot[1])])
+	get_tree().quit()
 
 
 func _try_start_events() -> void:
