@@ -57,9 +57,26 @@ func _show_line() -> void:
 			portrait_name = "portrait_samurai"
 	if portrait_name != "":
 		portrait.texture = SpriteLib.ui(portrait_name)
+		portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		portrait.visible = true
 	else:
 		portrait.visible = false
+	if index == 0 and OS.get_environment("KIKO_CAPTURE") != "":
+		_capture_dialog_after_draw()
+
+
+func _capture_dialog_after_draw() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	_save_dialog_shot()
+
+
+func _save_dialog_shot() -> void:
+	var cap := OS.get_environment("KIKO_CAPTURE")
+	if cap == "":
+		return
+	get_viewport().get_texture().get_image().save_png(cap + "/dialog_samurai.png")
 
 
 func _close() -> void:
