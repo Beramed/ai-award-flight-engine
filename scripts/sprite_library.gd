@@ -73,8 +73,8 @@ func kiko_frames() -> SpriteFrames:
 		"melee_pistola": {"count": 2, "speed": 10.0, "loop": false},
 		"melee_doze": {"count": 2, "speed": 10.0, "loop": false},
 		"rage": {"count": 4, "speed": 10.0},
-		"hurt": {"count": 2, "loop": false, "speed": 8.0},
-		"death": {"count": 2, "loop": false, "speed": 4.0},
+		"hurt": {"count": 2, "loop": false, "speed": 6.0},
+		"death": {"count": 2, "loop": false, "speed": 3.0},
 		"climb": {"count": 1, "loop": true, "speed": 6.0},
 		"victory": {"count": 1, "loop": true, "speed": 1.0},
 	})

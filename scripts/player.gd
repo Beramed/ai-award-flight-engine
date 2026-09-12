@@ -54,6 +54,8 @@ func _physics_process(delta: float) -> void:
 		if not is_on_floor():
 			velocity.y += GRAVITY * delta
 		move_and_slide()
+		if OS.get_environment("KIKO_CAPTURE") != "":
+			_run_capture()
 		return
 
 	invuln = max(0.0, invuln - delta)
@@ -113,50 +115,76 @@ func _physics_process(delta: float) -> void:
 	$Melee/CollisionShape2D.position.x = 24 * facing
 	$Melee/CollisionShape2D.position.y = -8
 	if OS.get_environment("KIKO_CAPTURE") != "":
-		_capture_frames += 1
-		var cap := OS.get_environment("KIKO_CAPTURE")
-		if _capture_frames < 16:
-			velocity.x = SPEED
-			anim.play("walk")
-		elif _capture_frames == 16:
-			get_viewport().get_texture().get_image().save_png(cap + "/combat_walk.png")
-		elif _capture_frames < 34:
-			GameState.current_weapon = "pistola"
-			_shoot()
-			anim.play("shoot_pistola")
-		elif _capture_frames == 34:
-			get_viewport().get_texture().get_image().save_png(cap + "/combat_revolver.png")
-		elif _capture_frames < 52:
-			GameState.current_weapon = "fuzil"
-			_shoot()
-			anim.play("shoot_fuzil")
-		elif _capture_frames == 52:
-			get_viewport().get_texture().get_image().save_png(cap + "/combat_fuzil.png")
-		elif _capture_frames < 70:
-			GameState.current_weapon = "doze"
-			_shoot()
-			anim.play("shoot_doze")
-		elif _capture_frames == 70:
-			get_viewport().get_texture().get_image().save_png(cap + "/combat_shotgun.png")
-			velocity.y = JUMP_VELOCITY
-		elif _capture_frames < 88:
-			GameState.current_weapon = "fuzil"
-			_shoot()
-			anim.play("jump_shoot_fuzil")
-		elif _capture_frames == 88:
-			get_viewport().get_texture().get_image().save_png(cap + "/combat_jump_shoot.png")
-			GameState.current_weapon = "fuzil"
-			anim.play("melee_fuzil")
-		elif _capture_frames == 94:
-			get_viewport().get_texture().get_image().save_png(cap + "/combat_melee.png")
-			GameState.current_weapon = "pistola"
-			anim.play("melee_pistola")
-		elif _capture_frames == 100:
-			get_viewport().get_texture().get_image().save_png(cap + "/combat_melee_revolver.png")
-			GameState.current_weapon = "doze"
-			anim.play("melee_doze")
-		elif _capture_frames == 106:
-			get_viewport().get_texture().get_image().save_png(cap + "/combat_melee_shotgun.png")
+		_run_capture()
+
+
+func _run_capture() -> void:
+	_capture_frames += 1
+	var cap := OS.get_environment("KIKO_CAPTURE")
+	if _capture_frames == 10:
+		GameState.score = 24500
+		GameState.score_changed.emit(GameState.score)
+		GameState.add_rage(80.0)
+		get_viewport().get_texture().get_image().save_png(cap + "/hud_arcade.png")
+	elif _capture_frames < 16:
+		velocity.x = SPEED
+		anim.play("walk")
+	elif _capture_frames == 16:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_walk.png")
+	elif _capture_frames < 34:
+		GameState.current_weapon = "pistola"
+		_shoot()
+		anim.play("shoot_pistola")
+	elif _capture_frames == 34:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_revolver.png")
+	elif _capture_frames < 52:
+		GameState.current_weapon = "fuzil"
+		_shoot()
+		anim.play("shoot_fuzil")
+	elif _capture_frames == 52:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_fuzil.png")
+	elif _capture_frames < 70:
+		GameState.current_weapon = "doze"
+		_shoot()
+		anim.play("shoot_doze")
+	elif _capture_frames == 70:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_shotgun.png")
+		velocity.y = JUMP_VELOCITY
+	elif _capture_frames < 88:
+		GameState.current_weapon = "fuzil"
+		_shoot()
+		anim.play("jump_shoot_fuzil")
+	elif _capture_frames == 88:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_jump_shoot.png")
+		GameState.current_weapon = "fuzil"
+		anim.play("melee_fuzil")
+	elif _capture_frames == 94:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_melee.png")
+		GameState.current_weapon = "pistola"
+		anim.play("melee_pistola")
+	elif _capture_frames == 100:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_melee_revolver.png")
+		GameState.current_weapon = "doze"
+		anim.play("melee_doze")
+	elif _capture_frames == 106:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_melee_shotgun.png")
+		_throw_grenade()
+	elif _capture_frames == 118:
+		get_viewport().get_texture().get_image().save_png(cap + "/hud_grenade.png")
+		GameState.rage = 80.0
+		GameState.rage_changed.emit(GameState.rage, GameState.MAX_RAGE)
+		invuln = 0.0
+		take_hit(1, Vector2(-40, -60))
+	elif _capture_frames == 128:
+		get_viewport().get_texture().get_image().save_png(cap + "/hud_hurt.png")
+		invuln = 0.0
+		take_hit(1, Vector2(-20, -40))
+	elif _capture_frames == 140:
+		get_viewport().get_texture().get_image().save_png(cap + "/hud_hurt2.png")
+		invuln = 0.0
+		take_hit(1, Vector2(-10, -20))
+	elif _capture_frames == 158:
+		get_viewport().get_texture().get_image().save_png(cap + "/hud_death.png")
 
 
 func _update_aim() -> void:
@@ -207,7 +235,6 @@ func _do_melee() -> void:
 	for body in melee_box.get_overlapping_bodies():
 		if body.has_method("take_hit"):
 			body.take_hit(4 if rage_t > 0.0 else 3, Vector2(facing * 200, -50))
-	GameState.add_rage(2.0)
 
 
 func _shoot() -> void:
@@ -228,7 +255,6 @@ func _shoot() -> void:
 		if dir == Vector2.ZERO:
 			dir = Vector2(facing, 0)
 		_spawn_bullet(dir.normalized(), stats)
-	GameState.add_rage(0.4)
 
 
 func _shoot_anim_name() -> String:
@@ -325,22 +351,24 @@ func _try_rage() -> void:
 	invuln = 10.0
 
 
-func take_hit(amount: int = 1, knock := Vector2.ZERO) -> void:
+func take_hit(_amount: int = 1, knock := Vector2.ZERO) -> void:
 	if invuln > 0.0 or rage_t > 0.0:
 		return
 	invuln = 1.1
 	velocity += knock
-	anim.play("hurt")
-	var dead := GameState.hit_player(amount)
+	var dead := GameState.hit_player(1)
 	if dead:
 		_die()
+	else:
+		anim.play("hurt")
 
 
 func _die() -> void:
 	locked = true
 	anim.play("death")
 	died.emit()
-	await get_tree().create_timer(1.1).timeout
+	await get_tree().create_timer(1.25).timeout
+	GameState.lose_life()
 	if GameState.lives <= 0:
 		if GameState.use_continue():
 			global_position = spawn_point
@@ -352,8 +380,6 @@ func _die() -> void:
 	global_position = spawn_point
 	locked = false
 	invuln = 1.5
-	GameState.hp = GameState.MAX_HP
-	GameState.hp_changed.emit(GameState.hp, GameState.MAX_HP)
 
 
 func _play_anim(x: float) -> void:

@@ -103,8 +103,10 @@ func take_hit(amount: int, knock := Vector2.ZERO) -> void:
 func _die() -> void:
 	dead = true
 	anim.play("die")
+	var data := Roteiro.inimigo(enemy_id)
+	GameState.add_score(int(data.get("score", 100)))
+	GameState.add_kill_rage(is_in_group("boss"))
 	GameState.add_coins(5)
-	GameState.add_rage(6.0)
 	collision_layer = 0
 	collision_mask = 1
 	await get_tree().create_timer(0.35).timeout
