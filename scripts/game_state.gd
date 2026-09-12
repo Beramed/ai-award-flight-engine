@@ -48,7 +48,7 @@ var weapon_order := ["pistola", "fuzil", "doze", "sniper"]
 var weapon_stats := {
 	"pistola": {
 		"damage": 3, "cooldown": 0.48, "speed": 390.0, "spread": 1, "pellets": 1,
-		"piercing": false, "life": 1.7, "scale": 2.2, "label": "REVOLVER",
+		"piercing": false, "life": 1.7, "scale": 1.15, "label": "REVOLVER",
 	},
 	"fuzil": {
 		"damage": 1, "cooldown": 0.07, "speed": 420.0, "spread": 3, "pellets": 1,
@@ -56,7 +56,7 @@ var weapon_stats := {
 	},
 	"doze": {
 		"damage": 1, "cooldown": 0.58, "speed": 250.0, "spread": 20, "pellets": 7,
-		"piercing": false, "life": 0.28, "scale": 0.85, "label": "ESPINGARDA",
+		"piercing": false, "life": 0.28, "scale": 1.0, "label": "ESPINGARDA",
 	},
 	"sniper": {
 		"damage": 4, "cooldown": 0.55, "speed": 520.0, "spread": 0, "pellets": 1,

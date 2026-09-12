@@ -145,9 +145,18 @@ func _physics_process(delta: float) -> void:
 			anim.play("jump_shoot_fuzil")
 		elif _capture_frames == 88:
 			get_viewport().get_texture().get_image().save_png(cap + "/combat_jump_shoot.png")
-			anim.play("melee")
+			GameState.current_weapon = "fuzil"
+			anim.play("melee_fuzil")
 		elif _capture_frames == 94:
 			get_viewport().get_texture().get_image().save_png(cap + "/combat_melee.png")
+			GameState.current_weapon = "pistola"
+			anim.play("melee_pistola")
+		elif _capture_frames == 100:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_melee_revolver.png")
+			GameState.current_weapon = "doze"
+			anim.play("melee_doze")
+		elif _capture_frames == 106:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_melee_shotgun.png")
 
 
 func _update_aim() -> void:
@@ -190,7 +199,11 @@ func _enemy_in_melee() -> bool:
 
 func _do_melee() -> void:
 	melee_t = 0.34
-	anim.play("rage" if rage_t > 0.0 else "melee")
+	if rage_t > 0.0:
+		anim.play("rage")
+	else:
+		var key := "melee_%s" % GameState.current_weapon
+		anim.play(key if anim.sprite_frames.has_animation(key) else "melee")
 	for body in melee_box.get_overlapping_bodies():
 		if body.has_method("take_hit"):
 			body.take_hit(4 if rage_t > 0.0 else 3, Vector2(facing * 200, -50))
@@ -205,6 +218,9 @@ func _shoot() -> void:
 		return
 	shoot_cd = stats["cooldown"]
 	anim.play(_shoot_anim_name())
+	_spawn_muzzle_fx()
+	if GameState.current_weapon in ["pistola", "doze"] or randf() < 0.35:
+		_spawn_casing()
 	var pellets: int = stats["pellets"]
 	for i in pellets:
 		var spread := deg_to_rad(stats["spread"]) * (i - (pellets - 1) / 2.0)
@@ -240,6 +256,50 @@ func _spawn_bullet(dir: Vector2, stats: Dictionary) -> void:
 	b.life = float(stats.get("life", 1.4))
 	b.apply_scale_factor(float(stats.get("scale", 1.0)))
 	get_tree().current_scene.add_child(b)
+
+
+func _spawn_muzzle_fx() -> void:
+	var tex_name := ""
+	match GameState.current_weapon:
+		"pistola":
+			tex_name = "muzzle_revolver"
+		"fuzil":
+			tex_name = "muzzle_fuzil"
+		"doze":
+			tex_name = "shotgun_blast"
+		_:
+			return
+	var tex := SpriteLib.fx(tex_name)
+	if tex == null:
+		return
+	var flash := Sprite2D.new()
+	flash.texture = tex
+	flash.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	flash.centered = true
+	flash.position = muzzle.position + Vector2(10 * facing, 0)
+	flash.flip_h = facing < 0
+	match GameState.current_weapon:
+		"doze":
+			flash.scale = Vector2(0.42, 0.42)
+		"fuzil":
+			flash.scale = Vector2(0.32, 0.32)
+		_:
+			flash.scale = Vector2(0.58, 0.58)
+	add_child(flash)
+	var tw := create_tween()
+	tw.tween_interval(0.06)
+	tw.tween_property(flash, "modulate:a", 0.0, 0.08)
+	tw.tween_callback(flash.queue_free)
+
+
+func _spawn_casing() -> void:
+	var tex := SpriteLib.fx("casing")
+	if tex == null:
+		return
+	var casing := preload("res://scenes/casing.tscn").instantiate()
+	casing.global_position = global_position + Vector2(facing * 4, -16)
+	casing.setup(tex, facing)
+	get_tree().current_scene.add_child(casing)
 
 
 func _throw_grenade() -> void:
