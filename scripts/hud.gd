@@ -62,6 +62,8 @@ func set_stage_title(text: String) -> void:
 func show_go() -> void:
 	if _go_lock > 0.0:
 		return
+	if banner:
+		banner.visible = false
 	_go_lock = 1.8
 	go_label.visible = true
 	go_label.modulate.a = 1.0
