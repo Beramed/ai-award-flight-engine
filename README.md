@@ -4,25 +4,30 @@
 
 Não precisa do Godot nem do `.bat`. Baixe este arquivo e dê **dois cliques**:
 
-**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/kiko-pose-shop-melee-44a0/KikoWildFuryMatajava.exe**
+**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/sprite-enemy-sheets-44a0/KikoWildFuryMatajava.exe**
 
 No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
-O SmartScreen do Windows pode avisar (o `.exe` não é assinado): **Mais informações → Executar assim mesmo**.
+O executável está identificado como **Beramed / Kiko Wild Fury Matajava** (não como Godot). Mesmo assim o Windows pode mostrar o SmartScreen na primeira vez, porque o arquivo **não tem certificado pago de assinatura**:
+
+1. Clique em **Mais informações**
+2. Clique em **Executar assim mesmo**
+
+Isso não é vírus. Sem um certificado Authenticode (DigiCert, Sectigo ou Azure Trusted Signing) o Windows trata qualquer `.exe` novo de desenvolvedor independente como “aplicativo não reconhecido”. Não desligue o Defender.
+
+Depois da primeira execução o aviso costuma parar neste computador.
 
 Na abertura: **Enter**, **Espaço** ou **clique** começa a Fase 1. Também há botões **1 JOGADOR**, **2 JOGADORES** e **OPÇÕES**.
 
 ## Arte
 
-O personagem usa a **sprite sheet de pixel art** em `assets/sprites/kiko_sheet.jpg` (andar, tiro, rage, pulo, golpe, dano, morte).
-
-A tela de abertura usa o **pôster completo** `assets/sprites/title_keyart.jpg` — sem corte. O viewport 16:9 mostra o pôster inteiro com faixas laterais.
-
-Para recortar os frames de novo:
+O personagem usa as **sprite sheets de pixel art** em `assets/sprites/kiko_ref_sheet.jpg` (idle, walk, agachar, tiro 90° abaixo, dano, morte). Javali, pássaro e drone vêm de `javali_ref_sheet.png`, `passaro_ref_sheet.jpg` e `drone.png`.
 
 ```bash
-python3 tools/slice_kiko_sheet.py
+python3 tools/extract_reference_sheets.py
 ```
+
+A tela de abertura usa o **pôster completo** `assets/sprites/title_keyart.jpg` — sem corte. O viewport 16:9 mostra o pôster inteiro com faixas laterais.
 
 ## Abrir no Godot (opcional)
 

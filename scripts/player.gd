@@ -101,22 +101,22 @@ func _physics_process(delta: float) -> void:
 
 	var x := Input.get_axis(_ia("move_left"), _ia("move_right"))
 	var holding_down := Input.is_action_pressed(_ia("aim_down"))
-	crouching = is_on_floor() and holding_down and abs(x) < 0.1
+	crouching = is_on_floor() and holding_down
+	if x != 0.0:
+		facing = 1 if x > 0.0 else -1
+		anim.flip_h = facing < 0
 	if crouching:
 		var crouch_shape := col.shape as RectangleShape2D
 		if crouch_shape:
 			crouch_shape.size = Vector2(18, 26)
 		col.position.y = 8
+		velocity.x = x * SPEED * 0.48
 	else:
 		var stand_shape := col.shape as RectangleShape2D
 		if stand_shape:
 			stand_shape.size = Vector2(18, 42)
 		col.position.y = 0
-
-	if x != 0.0:
-		facing = 1 if x > 0.0 else -1
-		anim.flip_h = facing < 0
-	velocity.x = x * SPEED
+		velocity.x = x * SPEED
 
 	if Input.is_action_just_pressed(_ia("jump")) and is_on_floor() and not crouching:
 		velocity.y = JUMP_VELOCITY
@@ -276,17 +276,27 @@ func _run_feature_capture() -> bool:
 	elif f == 14:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_house_front.png")
 		Input.action_press(_ia("aim_down"))
+		Input.action_press(_ia("move_right"))
 		Input.action_press(_ia("shoot"))
 		GameState.current_weapon = "pistola"
 	elif f == 18:
-		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_down.png")
-	elif f == 24:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_crouch_down.png")
+	elif f == 22:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_crouch_walk.png")
+		Input.action_release(_ia("move_right"))
 		Input.action_release(_ia("aim_down"))
 		Input.action_release(_ia("shoot"))
+		_spawn_capture_enemy("drone_carga", Vector2(80, -90), -1)
+		_spawn_capture_enemy("javali_investida", Vector2(110, 0), -1)
+		_spawn_capture_enemy("passaro_pedra", Vector2(140, -100), -1)
+	elif f == 110:
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_edge_spawn.png")
+		for node in get_tree().get_nodes_in_group("enemies"):
+			node.queue_free()
 		var shop := get_tree().get_first_node_in_group("shop_ui")
 		if shop and shop.has_method("force_open"):
 			shop.force_open()
-	elif f == 40:
+	elif f == 126:
 		get_viewport().get_texture().get_image().save_png(cap + "/shop_mineiro.png")
 		var shop2 := get_tree().get_first_node_in_group("shop_ui")
 		if shop2 and shop2.has_method("close"):
@@ -294,7 +304,7 @@ func _run_feature_capture() -> bool:
 		global_position = spawn_point
 		_feature_capture_done = true
 		_capture_frames = 0
-	return not _feature_capture_done or f <= 40
+	return not _feature_capture_done or f <= 126
 
 
 func ground_y_ref() -> float:
@@ -331,9 +341,16 @@ func _run_aim_demo() -> void:
 
 func _spawn_capture_enemy(id: String, offset: Vector2, face: int) -> void:
 	var e := preload("res://scenes/enemy.tscn").instantiate()
-	e.global_position = global_position + offset
+	var cam := get_viewport().get_camera_2d()
+	var cx := global_position.x
+	if cam:
+		cx = cam.get_screen_center_position().x
+	var from_right := offset.x >= 0.0
+	e.global_position = Vector2(cx + (300.0 if from_right else -300.0), global_position.y + offset.y)
 	get_tree().current_scene.add_child(e)
-	e.setup(id, face)
+	e.setup(id, -1 if from_right else 1)
+	e.entering = true
+	e.entry_target_x = global_position.x + offset.x
 
 
 func _update_muzzle() -> void:
@@ -594,9 +611,11 @@ func _die() -> void:
 func _play_anim(x: float) -> void:
 	if grenade_t > 0.0 or melee_t > 0.0 or (anim.animation in ["hurt", "death"] and anim.is_playing()):
 		return
-	# Moving: always cycle walk/run legs, no matter where the gun is pointed.
 	if is_on_floor() and abs(x) > 0.1:
-		anim.play("walk")
+		if crouching:
+			anim.play("crouch_walk" if anim.sprite_frames.has_animation("crouch_walk") else "crouch")
+		else:
+			anim.play("run" if abs(x) > 0.95 and anim.sprite_frames.has_animation("run") else "walk")
 		anim.flip_h = facing < 0
 		return
 	if rage_t > 0.0 and Input.is_action_pressed(_ia("shoot")):
@@ -621,7 +640,14 @@ func _play_anim(x: float) -> void:
 		anim.frame = 0
 		anim.pause()
 	elif not is_on_floor():
-		anim.play("jump")
+		if velocity.y < -90.0 and anim.sprite_frames.has_animation("jump_up"):
+			anim.play("jump_up")
+		elif velocity.y > 70.0 and anim.sprite_frames.has_animation("jump_fall"):
+			anim.play("jump_fall")
+		elif anim.sprite_frames.has_animation("jump_start") and velocity.y < 0.0:
+			anim.play("jump_start")
+		else:
+			anim.play("jump")
 	elif crouching:
 		anim.play("crouch")
 	else:

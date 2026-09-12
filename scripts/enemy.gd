@@ -2,6 +2,7 @@ extends CharacterBody2D
 class_name EnemyBase
 
 const GRAVITY := 820.0
+const CargoCrateScene := preload("res://scripts/cargo_crate.gd")
 
 var enemy_id := "javali_corredor"
 var hp := 3
@@ -17,6 +18,11 @@ var ai_t := 0.0
 var hover_y := 0.0
 var touch_dmg := 1
 var loot_kind := ""
+var entering := false
+var entry_target_x := 0.0
+var ferry := false
+var cargo = null
+var hit_flash := 0.0
 
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var col: CollisionShape2D = $Collision
@@ -51,15 +57,27 @@ func setup(p_id: String, p_facing: int = -1) -> void:
 			shape.size = Vector2(22, 16)
 		col.position.y = 0
 		hover_y = global_position.y
+		z_index = 8
 		anim.play("fly")
+		if kind == "drone":
+			ferry = true
+			_attach_cargo()
 	elif kind == "thrower":
-		anim.play("throw")
+		anim.play("throw" if anim.sprite_frames.has_animation("throw") else "walk")
 	elif kind == "armored":
-		anim.play("blindado")
+		anim.play("blindado" if anim.sprite_frames.has_animation("blindado") else "walk")
 		modulate = Color(0.75, 0.8, 0.9)
 	else:
-		anim.play("charge")
+		anim.play("walk" if anim.sprite_frames.has_animation("walk") else "run")
 	_snap_feet()
+
+
+func _attach_cargo() -> void:
+	if cargo:
+		return
+	cargo = CargoCrateScene.new()
+	add_child(cargo)
+	cargo.setup_attached(self, loot_kind if loot_kind != "" else "")
 
 
 func _snap_feet() -> void:
@@ -82,11 +100,22 @@ func _physics_process(delta: float) -> void:
 		return
 	attack_cd = max(0.0, attack_cd - delta)
 	ai_t = max(0.0, ai_t - delta)
+	hit_flash = max(0.0, hit_flash - delta)
+	if hit_flash <= 0.0 and not armored:
+		modulate = Color.WHITE
+	if entering:
+		_ai_enter(delta)
+		move_and_slide()
+		if airborne:
+			_touch_distance()
+		else:
+			_touch_player()
+		return
 	if airborne:
 		_ai_air(delta)
 		move_and_slide()
 		_touch_distance()
-		if global_position.x < -80.0 or global_position.x > 5800.0:
+		if global_position.x < -120.0 or global_position.x > 5900.0:
 			queue_free()
 		return
 	if not is_on_floor():
@@ -103,6 +132,42 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_touch_player()
 	if global_position.y > 420:
+		queue_free()
+
+
+func _ai_enter(delta: float) -> void:
+	anim.flip_h = facing < 0
+	if airborne:
+		velocity.x = facing * speed
+		global_position.y = lerp(global_position.y, hover_y + sin(Time.get_ticks_msec() * 0.004) * 5.0, 0.2)
+		velocity.y = 0.0
+		anim.play("fly")
+		if ferry:
+			_ai_ferry_exit()
+			return
+	else:
+		if not is_on_floor():
+			velocity.y += GRAVITY * delta
+		velocity.x = facing * speed
+		if anim.sprite_frames.has_animation("run"):
+			anim.play("run")
+		elif anim.sprite_frames.has_animation("walk"):
+			anim.play("walk")
+	var reached := (facing > 0 and global_position.x >= entry_target_x) or (facing < 0 and global_position.x <= entry_target_x)
+	var on_screen := true
+	var cam := get_viewport().get_camera_2d()
+	if cam:
+		on_screen = absf(global_position.x - cam.get_screen_center_position().x) < 228.0
+	if reached and on_screen:
+		entering = false
+
+
+func _ai_ferry_exit() -> void:
+	var cam := get_viewport().get_camera_2d()
+	if cam == null:
+		return
+	var cx := cam.get_screen_center_position().x
+	if (facing > 0 and global_position.x > cx + 268.0) or (facing < 0 and global_position.x < cx - 268.0):
 		queue_free()
 
 
@@ -186,14 +251,22 @@ func _ai_armored() -> void:
 
 func _ai_air(delta: float) -> void:
 	var player := _player()
-	if player and kind == "drone":
-		facing = 1 if player.global_position.x > global_position.x else -1
+	if ferry or kind == "drone":
+		velocity.x = facing * speed
+		global_position.y = lerp(global_position.y, hover_y + sin(Time.get_ticks_msec() * 0.004) * 6.0, 0.2)
+		velocity.y = 0.0
+		anim.flip_h = facing < 0
+		anim.play("fly")
+		_ai_ferry_exit()
+		return
+	if player:
+		facing = -1 if player.global_position.x < global_position.x else 1
 	velocity.x = facing * speed
 	global_position.y = lerp(global_position.y, hover_y + sin(Time.get_ticks_msec() * 0.004) * 6.0, 0.2)
 	velocity.y = 0.0
 	anim.flip_h = facing < 0
 	if ai_phase == "drop":
-		anim.play("drop")
+		anim.play("drop" if anim.sprite_frames.has_animation("drop") else "attack")
 		if ai_t <= 0.18 and attack_cd <= 0.04:
 			if kind == "bird":
 				_spawn_rock(Vector2(0.0, 40.0))
@@ -202,7 +275,7 @@ func _ai_air(delta: float) -> void:
 			ai_phase = "move"
 		return
 	anim.play("fly")
-	if kind == "bird" and attack_cd <= 0.0:
+	if kind == "bird" and attack_cd <= 0.0 and player and absf(player.global_position.x - global_position.x) < 90.0:
 		ai_phase = "drop"
 		ai_t = 0.5
 
@@ -222,8 +295,15 @@ func take_hit(amount: int, knock := Vector2.ZERO) -> void:
 		await get_tree().create_timer(0.08).timeout
 		modulate = Color(0.75, 0.8, 0.9)
 		return
+	if kind == "drone" and cargo and cargo.attached:
+		cargo.detach(velocity + knock)
+		cargo = null
 	hp -= amount
 	velocity += knock * 0.35
+	hit_flash = 0.12
+	modulate = Color(1.35, 0.85, 0.85)
+	if anim.sprite_frames and anim.sprite_frames.has_animation("hit") and not airborne:
+		anim.play("hit")
 	if hp <= 0:
 		_die()
 
@@ -231,9 +311,17 @@ func take_hit(amount: int, knock := Vector2.ZERO) -> void:
 func _die() -> void:
 	dead = true
 	velocity = Vector2.ZERO
+	if kind == "drone" and cargo and is_instance_valid(cargo) and cargo.attached:
+		cargo.detach(velocity)
+		cargo = null
 	var death := "die_forward"
 	if kind == "bird" or kind == "drone":
-		death = "drop" if anim.sprite_frames.has_animation("drop") else "fly"
+		if anim.sprite_frames.has_animation("die"):
+			death = "die"
+		elif anim.sprite_frames.has_animation("drop"):
+			death = "drop"
+		else:
+			death = "fly"
 	elif randf() < 0.5 and anim.sprite_frames.has_animation("die_flip"):
 		death = "die_flip"
 	elif anim.sprite_frames.has_animation("die_forward"):
