@@ -4,7 +4,7 @@
 
 Não precisa do Godot nem do `.bat`. Baixe este arquivo e dê **dois cliques**:
 
-**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/hud-rage-44a0/KikoWildFuryMatajava.exe**
+**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/farm-level-map-44a0/KikoWildFuryMatajava.exe**
 
 No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
