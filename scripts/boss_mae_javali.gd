@@ -50,6 +50,7 @@ func _shockwave() -> void:
 	if shock_cd > 0.0:
 		return
 	shock_cd = 1.6
+	ArcadeFX.shake(8.0, 0.32)
 	var wave := ColorRect.new()
 	wave.color = Color(0.9, 0.85, 0.7, 0.55)
 	wave.size = Vector2(40, 18)

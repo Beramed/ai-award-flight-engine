@@ -74,6 +74,7 @@ func _explode(on_ground: bool = false) -> void:
 	velocity = Vector2.ZERO
 	rotation = 0.0
 	boom_hits.clear()
+	ArcadeFX.shake(10.0 if ground_blast else 6.5, 0.28 if ground_blast else 0.18)
 	call_deferred("_arm_blast")
 
 

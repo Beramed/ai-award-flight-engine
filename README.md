@@ -4,7 +4,7 @@
 
 Não precisa do Godot nem do `.bat`. Baixe este arquivo e dê **dois cliques**:
 
-**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/sprite-enemy-sheets-44a0/KikoWildFuryMatajava.exe**
+**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/metal-slug-loop-44a0/KikoWildFuryMatajava.exe**
 
 No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
@@ -47,7 +47,9 @@ A tela de abertura usa o **pôster completo** `assets/sprites/title_keyart.jpg` 
 | Trocar arma (revólver / metralhadora / espingarda) | Q / Tab |
 | Rage (barra azul cheia) | R / Shift |
 
-Vida: **3 hits**. Cada hit tira 33% da barra laranja e zera a **RAGE**. A RAGE sobe ao matar inimigos. HUD no topo (vida / vidas / score), armas e munição na base.
+Vida: **3 hits**. Cada hit tira 33% da barra laranja e zera a **RAGE**. A RAGE sobe ao matar inimigos. HUD no topo (vida / vidas / POW / score), armas e munição na base.
+
+Loop arcade (inspirado em Metal Slug, com os frames do Kiko): **MISSION START / MISSION COMPLETE**, **GO!** ao limpar a leva, **POW** (família) ao encostar — soltam caixa com letra H/S/G/R, +1000 e correm. Granadas e a Matriarca tremem a tela. Pontos flutuam no kill. Morrer com arma pesada **larga o pickup** e volta ao revólver infinito. Sem vidas: overlay **CONTINUE 10…0** (Enter/Espaço gasta um crédito).
 
 No meio da fazenda abre o **Armazém do Mineiro** (loja no palco, sem trocar de cena). **EXIT**, Esc ou Enter volta ao jogo.
 

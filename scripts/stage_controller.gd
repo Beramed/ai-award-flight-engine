@@ -45,6 +45,8 @@ func boot(numero: int) -> void:
 		await _save_mapshots()
 		return
 	await _try_start_events()
+	if hud and OS.get_environment("KIKO_MAPSHOT") == "":
+		await hud.show_banner("MISSION START")
 	busy = false
 
 
@@ -131,15 +133,17 @@ func _run_event(ev: Dictionary) -> void:
 				return
 			await dialog.play(Roteiro.dialogo(stage_number, String(ev.get("chave", ""))))
 		"spawn":
-			_spawn_pack(ev.get("inimigos", []))
+			_spawn_pack(ev.get("inimigos", []), true)
 		"arena":
 			await _run_arena(ev)
 		"resgate":
-			await _run_rescue(ev)
+			_run_rescue(ev)
 		"loja":
 			# Door in the world: press up to enter. Do not auto-pause the stage.
 			return
 		"vitoria":
+			if hud:
+				await hud.show_banner("MISSION COMPLETE")
 			GameState.stage_cleared = true
 			stage_cleared.emit()
 
@@ -152,7 +156,7 @@ func _run_arena(ev: Dictionary) -> void:
 		_spawn_blockers(float(ev.get("left", 0)), float(ev.get("right", 480)))
 		await dialog.play(Roteiro.dialogo(stage_number, "chefe"))
 	for onda in ev.get("ondas", []):
-		_spawn_pack(onda)
+		_spawn_pack(onda, false)
 		await _wait_enemies_dead()
 	if is_boss:
 		_clear_blockers()
@@ -163,19 +167,11 @@ func _run_arena(ev: Dictionary) -> void:
 
 func _run_rescue(ev: Dictionary) -> void:
 	var quem := String(ev.get("quem", "juliana"))
-	_spawn_npc(quem, float(ev.get("x", player.global_position.x + 40)))
-	await dialog.play(Roteiro.dialogo(stage_number, String(ev.get("chave", quem))))
-	match String(ev.get("bonus", "")):
-		"fuzil":
-			GameState.give_weapon("fuzil", 90)
-		"municao":
-			GameState.refill_ammo()
-			GameState.add_coins(25)
-		"cura":
-			GameState.heal_full()
+	_spawn_pow(quem, float(ev.get("x", player.global_position.x + 40)), String(ev.get("bonus", "fuzil")))
 
 
-func _spawn_pack(pack: Array) -> void:
+func _spawn_pack(pack: Array, watch_go := false) -> void:
+	var spawned: Array = []
 	var cam_x := 240.0
 	if cam:
 		cam_x = cam.get_screen_center_position().x
@@ -191,6 +187,7 @@ func _spawn_pack(pack: Array) -> void:
 			node.global_position = Vector2(float(info.get("x", cam_x + 180.0)), y)
 			add_child(node)
 			node.setup(id, int(info.get("facing", -1)))
+			spawned.append(node)
 			continue
 		node = preload("res://scenes/enemy.tscn").instantiate()
 		var data := Roteiro.inimigo(id)
@@ -227,6 +224,27 @@ func _spawn_pack(pack: Array) -> void:
 			var held = node.get("cargo")
 			if held:
 				held.loot = drop
+		spawned.append(node)
+	if watch_go:
+		_flash_go_when_cleared(spawned)
+
+
+func _flash_go_when_cleared(pack: Array) -> void:
+	_watch_pack_clear(pack)
+
+
+func _watch_pack_clear(pack: Array) -> void:
+	await get_tree().create_timer(0.35).timeout
+	while true:
+		var alive := 0
+		for n in pack:
+			if n != null and is_instance_valid(n) and not bool(n.get("dead")):
+				alive += 1
+		if alive == 0:
+			if hud and not waiting_arena and not GameState.stage_cleared:
+				hud.show_go()
+			return
+		await get_tree().create_timer(0.22).timeout
 
 
 func _wait_enemies_dead() -> void:
@@ -395,12 +413,13 @@ func _build_farm_objects() -> void:
 	_breakable("fence", 700.0, "none")
 	_breakable("barrel", 760.0, "granadas")
 	_breakable("hay", 1720.0, "none")
-	_breakable("crate", 1800.0, "moedas")
+	_breakable("crate", 1800.0, "comida")
 	_low_rock(1920.0)
 	_breakable("barrel", 2620.0, "municao")
 	_breakable("hay", 3460.0, "none")
 	_breakable("fence", 3600.0, "none")
 	_breakable("barrel", 4180.0, "kit")
+	_breakable("crate", 4280.0, "comida")
 	_low_rock(4420.0)
 	_low_rock(4560.0)
 	_low_rock(5340.0)
@@ -579,19 +598,15 @@ func _clear_blockers() -> void:
 		r.queue_free()
 
 
+func _spawn_pow(quem: String, x: float, bonus: String) -> void:
+	var pow := preload("res://scenes/pow_hostage.tscn").instantiate()
+	add_child(pow)
+	pow.global_position = Vector2(x, ground_y - 18.0)
+	pow.setup(quem, bonus)
+
+
 func _spawn_npc(quem: String, x: float) -> void:
-	var npc := Sprite2D.new()
-	npc.position = Vector2(x, ground_y - 24)
-	npc.texture = SpriteLib.ui("portrait_kiko")
-	npc.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	match quem:
-		"juliana":
-			npc.modulate = Color(1.0, 0.75, 0.85)
-		"fernanda":
-			npc.modulate = Color(0.75, 0.9, 1.0)
-		"raquel":
-			npc.modulate = Color(1.0, 0.85, 0.55)
-	add_child(npc)
+	_spawn_pow(quem, x, "fuzil")
 
 
 func _make_rain() -> void:

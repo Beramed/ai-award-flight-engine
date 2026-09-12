@@ -19,10 +19,18 @@ var rage_fill: ColorRect
 var rage_lbl: Label
 var portrait: TextureRect
 var weapon_slots: Array[Control] = []
+var pow_lbl: Label
+var banner: Label
+var continue_root: Control
+var continue_count: Label
+var continue_hint: Label
+var _go_lock := 0.0
 
 
 func _ready() -> void:
 	layer = 10
+	add_to_group("hud")
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build()
 	GameState.hp_changed.connect(_on_hp)
 	GameState.weapon_changed.connect(_refresh)
@@ -32,13 +40,19 @@ func _ready() -> void:
 	GameState.rage_changed.connect(_on_rage)
 	GameState.lives_changed.connect(_on_lives)
 	GameState.portrait_changed.connect(_on_portrait)
+	GameState.pow_changed.connect(_on_pow)
 	go_label.visible = false
 	_on_hp(GameState.hp, GameState.MAX_HP)
 	_on_rage(GameState.rage, GameState.MAX_RAGE)
 	_on_lives(GameState.lives)
 	_on_score(GameState.score)
 	_on_portrait(GameState.portrait)
+	_on_pow(GameState.pow_rescued)
 	_paint_weapons()
+
+
+func _process(delta: float) -> void:
+	_go_lock = maxf(0.0, _go_lock - delta)
 
 
 func set_stage_title(text: String) -> void:
@@ -46,12 +60,73 @@ func set_stage_title(text: String) -> void:
 
 
 func show_go() -> void:
+	if _go_lock > 0.0:
+		return
+	_go_lock = 1.8
 	go_label.visible = true
 	go_label.modulate.a = 1.0
 	var tw := create_tween()
 	tw.tween_interval(1.1)
 	tw.tween_property(go_label, "modulate:a", 0.0, 0.4)
 	tw.tween_callback(func(): go_label.visible = false)
+
+
+func show_banner(text: String, hold := 1.6) -> void:
+	banner.text = text
+	banner.visible = true
+	banner.modulate.a = 1.0
+	banner.scale = Vector2(0.72, 0.72)
+	var tw := create_tween()
+	tw.tween_property(banner, "scale", Vector2.ONE, 0.18)
+	tw.tween_interval(hold)
+	tw.tween_property(banner, "modulate:a", 0.0, 0.35)
+	tw.tween_callback(func(): banner.visible = false)
+	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_MAPSHOT") != "" or OS.get_environment("KIKO_TEST_START") == "1":
+		return
+	await tw.finished
+
+
+func prompt_continue() -> bool:
+	if GameState.continues_left <= 0:
+		return false
+	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_TEST_START") == "1":
+		return GameState.use_continue()
+	GameState.awaiting_continue = true
+	GameState.paused_by_dialog = true
+	continue_root.visible = true
+	continue_hint.text = "CREDITOS %d  —  ENTER / ESPACO" % GameState.continues_left
+	for n in range(10, -1, -1):
+		continue_count.text = str(n)
+		var elapsed := 0.0
+		while elapsed < 1.0:
+			if _continue_pressed():
+				GameState.use_continue()
+				_hide_continue()
+				return true
+			elapsed += get_process_delta_time()
+			await get_tree().process_frame
+	_hide_continue()
+	return false
+
+
+func show_continue_preview(n := 9) -> void:
+	continue_root.visible = true
+	continue_count.text = str(n)
+	continue_hint.text = "CREDITOS %d  —  ENTER / ESPACO" % max(GameState.continues_left, 1)
+
+
+func hide_continue_preview() -> void:
+	_hide_continue()
+
+
+func _hide_continue() -> void:
+	continue_root.visible = false
+	GameState.awaiting_continue = false
+	GameState.paused_by_dialog = false
+
+
+func _continue_pressed() -> bool:
+	return Input.is_action_just_pressed("confirm") or Input.is_action_just_pressed("ui_start") or Input.is_action_just_pressed("jump")
 
 
 func _build() -> void:
@@ -126,8 +201,9 @@ func _build() -> void:
 	rage_lbl.clip_text = false
 	rage_lbl.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0, 1))
 
-	var text_y := rage_pos.y + rage_size.y + 6.0
-	lives_lbl = _hud_label(Vector2(col_x, text_y), Vector2(col_w, 9), 7)
+	var text_y := rage_pos.y + rage_size.y + 4.0
+	lives_lbl = _hud_label(Vector2(col_x, text_y), Vector2(col_w * 0.55, 9), 7)
+	pow_lbl = _hud_label(Vector2(col_x + col_w * 0.52, text_y), Vector2(col_w * 0.5, 9), 7)
 	score_lbl = _hud_label(Vector2(col_x, text_y + 10.0), Vector2(col_w, 9), 7)
 
 	var weapons_bg := ColorRect.new()
@@ -154,7 +230,66 @@ func _build() -> void:
 	stage_name.position = Vector2(250, 4)
 	stage_name.size = Vector2(226, 14)
 	stage_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+
+	banner = Label.new()
+	banner.visible = false
+	banner.position = Vector2(40, 92)
+	banner.size = Vector2(400, 44)
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	banner.pivot_offset = Vector2(200, 22)
+	banner.add_theme_font_size_override("font_size", 22)
+	banner.add_theme_color_override("font_color", Color(1.0, 0.88, 0.18, 1))
+	banner.add_theme_color_override("font_outline_color", Color(0.15, 0.02, 0.0, 1))
+	banner.add_theme_constant_override("outline_size", 8)
+	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(banner)
+
+	continue_root = Control.new()
+	continue_root.visible = false
+	continue_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	continue_root.position = Vector2.ZERO
+	continue_root.size = Vector2(480, 270)
+	root.add_child(continue_root)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.62)
+	dim.position = Vector2.ZERO
+	dim.size = Vector2(480, 270)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	continue_root.add_child(dim)
+	var cont_title := Label.new()
+	cont_title.text = "CONTINUE"
+	cont_title.position = Vector2(80, 70)
+	cont_title.size = Vector2(320, 32)
+	cont_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cont_title.add_theme_font_size_override("font_size", 26)
+	cont_title.add_theme_color_override("font_color", Color(1.0, 0.22, 0.18, 1))
+	cont_title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	cont_title.add_theme_constant_override("outline_size", 8)
+	continue_root.add_child(cont_title)
+	continue_count = Label.new()
+	continue_count.text = "10"
+	continue_count.position = Vector2(140, 104)
+	continue_count.size = Vector2(200, 56)
+	continue_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	continue_count.add_theme_font_size_override("font_size", 42)
+	continue_count.add_theme_color_override("font_color", Color(1.0, 0.95, 0.35, 1))
+	continue_count.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	continue_count.add_theme_constant_override("outline_size", 8)
+	continue_root.add_child(continue_count)
+	continue_hint = Label.new()
+	continue_hint.position = Vector2(40, 168)
+	continue_hint.size = Vector2(400, 18)
+	continue_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	continue_hint.add_theme_font_size_override("font_size", 9)
+	continue_hint.add_theme_color_override("font_color", Color(0.95, 0.95, 0.9, 1))
+	continue_hint.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	continue_hint.add_theme_constant_override("outline_size", 3)
+	continue_root.add_child(continue_hint)
+
 	root.move_child(go_label, -1)
+	root.move_child(banner, -1)
+	root.move_child(continue_root, -1)
 
 
 func _hud_label(pos: Vector2, size: Vector2, font_size: int) -> Label:
@@ -212,7 +347,12 @@ func _on_portrait(kind: String) -> void:
 
 
 func _on_lives(value: int) -> void:
-	lives_lbl.text = "LIVES: %d" % max(value, 0)
+	lives_lbl.text = "LIVES %d" % max(value, 0)
+
+
+func _on_pow(value: int) -> void:
+	if pow_lbl:
+		pow_lbl.text = "POW %d" % max(value, 0)
 
 
 func _on_score(value: int) -> void:

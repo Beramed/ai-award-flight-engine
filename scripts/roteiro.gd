@@ -110,7 +110,7 @@ const FASES := {
 		],
 		"caixas": [
 			{"x": 210, "loot": "moedas"},
-			{"x": 360, "loot": "moedas"},
+			{"x": 360, "loot": "comida"},
 			{"x": 520, "loot": "moedas"},
 			{"x": 1240, "loot": "fuzil"},
 			{"x": 1680, "loot": "moedas"},

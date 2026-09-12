@@ -273,15 +273,19 @@ func _run_feature_capture() -> bool:
 			stage.set("event_i", 999)
 		for node in get_tree().get_nodes_in_group("enemies"):
 			node.queue_free()
-	elif f == 14:
+		var hud0 := get_tree().get_first_node_in_group("hud")
+		if hud0 and hud0.has_method("show_banner"):
+			hud0.show_banner("MISSION START", 1.2)
+	elif f == 10:
+		get_viewport().get_texture().get_image().save_png(cap + "/arcade_mission_start.png")
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_house_front.png")
 		Input.action_press(_ia("aim_down"))
 		Input.action_press(_ia("move_right"))
 		Input.action_press(_ia("shoot"))
 		GameState.current_weapon = "pistola"
-	elif f == 18:
+	elif f == 14:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_crouch_down.png")
-	elif f == 22:
+	elif f == 18:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_crouch_walk.png")
 		Input.action_release(_ia("move_right"))
 		Input.action_release(_ia("aim_down"))
@@ -289,22 +293,45 @@ func _run_feature_capture() -> bool:
 		_spawn_capture_enemy("drone_carga", Vector2(80, -90), -1)
 		_spawn_capture_enemy("javali_investida", Vector2(110, 0), -1)
 		_spawn_capture_enemy("passaro_pedra", Vector2(140, -100), -1)
+	elif f == 22:
+		var hud_go := get_tree().get_first_node_in_group("hud")
+		if hud_go and hud_go.has_method("show_go"):
+			hud_go.show_go()
+		ArcadeFX.score_pop(global_position + Vector2(40, -20), 1000)
+	elif f == 28:
+		get_viewport().get_texture().get_image().save_png(cap + "/arcade_go_score.png")
 	elif f == 110:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_edge_spawn.png")
 		for node in get_tree().get_nodes_in_group("enemies"):
 			node.queue_free()
+		_spawn_capture_pow()
+	elif f == 118:
+		get_viewport().get_texture().get_image().save_png(cap + "/arcade_pow.png")
+		for pow in get_tree().get_nodes_in_group("pow"):
+			if pow.has_method("_rescue"):
+				pow._rescue(self)
+	elif f == 124:
+		get_viewport().get_texture().get_image().save_png(cap + "/arcade_pow_rescue.png")
 		var shop := get_tree().get_first_node_in_group("shop_ui")
 		if shop and shop.has_method("force_open"):
 			shop.force_open()
-	elif f == 126:
+	elif f == 132:
 		get_viewport().get_texture().get_image().save_png(cap + "/shop_mineiro.png")
 		var shop2 := get_tree().get_first_node_in_group("shop_ui")
 		if shop2 and shop2.has_method("close"):
 			shop2.close()
+		var hud_c := get_tree().get_first_node_in_group("hud")
+		if hud_c and hud_c.has_method("show_continue_preview"):
+			hud_c.show_continue_preview(9)
+	elif f == 138:
+		get_viewport().get_texture().get_image().save_png(cap + "/arcade_continue.png")
+		var hud_h := get_tree().get_first_node_in_group("hud")
+		if hud_h and hud_h.has_method("hide_continue_preview"):
+			hud_h.hide_continue_preview()
 		global_position = spawn_point
 		_feature_capture_done = true
 		_capture_frames = 0
-	return not _feature_capture_done or f <= 126
+	return not _feature_capture_done or f <= 138
 
 
 func ground_y_ref() -> float:
@@ -337,6 +364,13 @@ func _run_aim_demo() -> void:
 		for node in get_tree().get_nodes_in_group("grenades"):
 			if node.has_method("_explode"):
 				node._explode()
+
+
+func _spawn_capture_pow() -> void:
+	var pow := preload("res://scenes/pow_hostage.tscn").instantiate()
+	pow.global_position = global_position + Vector2(36, 2)
+	get_tree().current_scene.add_child(pow)
+	pow.setup("juliana", "fuzil")
 
 
 func _spawn_capture_enemy(id: String, offset: Vector2, face: int) -> void:
@@ -591,21 +625,39 @@ func take_hit(_amount: int = 1, knock := Vector2.ZERO) -> void:
 func _die() -> void:
 	locked = true
 	anim.play("death")
+	_drop_heavy_weapon()
 	GameState.lose_life()
 	died.emit()
 	await get_tree().create_timer(1.25).timeout
 	if GameState.lives <= 0:
-		if GameState.use_continue():
-			global_position = spawn_point
-			locked = false
-			invuln = 1.5
+		var ok := false
+		var hud := get_tree().get_first_node_in_group("hud")
+		if hud and hud.has_method("prompt_continue"):
+			ok = await hud.prompt_continue()
+		else:
+			ok = GameState.use_continue()
+		if not ok:
+			get_tree().change_scene_to_file("res://scenes/title.tscn")
 			return
-		get_tree().change_scene_to_file("res://scenes/title.tscn")
+		global_position = spawn_point
+		locked = false
+		invuln = 1.5
+		GameState.refill_hp()
 		return
 	global_position = spawn_point
 	locked = false
 	invuln = 1.5
 	GameState.refill_hp()
+
+
+func _drop_heavy_weapon() -> void:
+	var dropped := GameState.drop_weapon_id()
+	if dropped == "":
+		return
+	var p := preload("res://scenes/pickup.tscn").instantiate()
+	p.global_position = global_position + Vector2(0, -10)
+	p.setup(dropped)
+	get_tree().current_scene.add_child(p)
 
 
 func _play_anim(x: float) -> void:
