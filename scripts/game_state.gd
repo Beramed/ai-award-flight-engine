@@ -238,10 +238,10 @@ func _emit_all() -> void:
 
 
 func _bind_actions() -> void:
-	_act("move_left", [KEY_A, KEY_LEFT])
-	_act("move_right", [KEY_D, KEY_RIGHT])
-	_act("aim_up", [KEY_W, KEY_UP])
-	_act("aim_down", [KEY_S, KEY_DOWN])
+	_act("move_left", [KEY_A])
+	_act("move_right", [KEY_D])
+	_act("aim_up", [KEY_W])
+	_act("aim_down", [KEY_S])
 	_act("jump", [KEY_SPACE, KEY_Z])
 	_act("shoot", [KEY_J, KEY_X])
 	_act("grenade", [KEY_G, KEY_C])

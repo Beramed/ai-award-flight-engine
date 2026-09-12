@@ -1,9 +1,10 @@
 # Godot 4
 .godot/
 *.translation
-export_presets.cfg
 export.cfg
 .import/
+*.import
+*.uid
 *.tmp
 
 # OS
@@ -16,3 +17,11 @@ desktop.ini
 *~
 .vscode/
 .idea/
+
+# Mega Drive / SGDK build
+megadrive/out/
+megadrive/src/boot/
+megadrive/res/resources.h
+megadrive/res/*.rs
+megadrive/res/*.d
+megadrive/res/*.h

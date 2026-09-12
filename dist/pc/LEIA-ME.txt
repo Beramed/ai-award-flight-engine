@@ -1,0 +1,5 @@
+O executavel do jogo esta na pasta principal do projeto:
+
+  KikoWildFuryMatajava.exe
+
+Clique duas vezes nele. Nao use o JOGAR.bat.
