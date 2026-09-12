@@ -20,6 +20,22 @@ func _physics_process(delta: float) -> void:
 	life -= delta
 	if col or life <= 0.0:
 		queue_free()
+		return
+	_aabb_player()
+
+
+func _aabb_player() -> void:
+	if hit:
+		return
+	var mine := Rect2(global_position - Vector2(6, 6), Vector2(12, 12))
+	for h in get_tree().get_nodes_in_group("hurtbox_player"):
+		if h == null or not is_instance_valid(h):
+			continue
+		if ArcadeHitbox.overlap(mine, h.aabb()):
+			hit = true
+			h.receive_hit(1, Vector2(sign(velocity.x) * 90, -40))
+			queue_free()
+			return
 
 
 func _on_hurt_body_entered(body: Node) -> void:

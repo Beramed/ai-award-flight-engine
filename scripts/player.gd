@@ -5,6 +5,9 @@ const SPEED := 118.0
 const JUMP_VELOCITY := -332.0
 const GRAVITY := 820.0
 const BODY_SCALE := 0.7
+const WORLD_STAND := Vector2(16, 40)
+const WORLD_CROUCH := Vector2(16, 20)
+const WORLD_FEET := 20.0
 
 signal died
 
@@ -25,6 +28,8 @@ var spawn_point := Vector2.ZERO
 var last_ground := Vector2.ZERO
 var _capture_frames := 0
 var _feature_capture_done := false
+var motion: int = ArcadeMotion.State.IDLE
+var hurtbox: ArcadeHitbox
 
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var col: CollisionShape2D = $Collision
@@ -49,6 +54,9 @@ func _ready() -> void:
 	anim.centered = true
 	z_index = 6
 	scale = Vector2(BODY_SCALE, BODY_SCALE)
+	_dup_world_shape()
+	_make_hurtbox()
+	_apply_pose_boxes()
 	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
 		Engine.max_fps = 60
 
@@ -59,12 +67,62 @@ func _ia(action: String) -> String:
 	return "p2_" + action
 
 
+func _dup_world_shape() -> void:
+	var shape := col.shape as RectangleShape2D
+	if shape:
+		col.shape = shape.duplicate()
+
+
+func _make_hurtbox() -> void:
+	hurtbox = ArcadeHitbox.new()
+	hurtbox.name = "Hurtbox"
+	hurtbox.team = "player"
+	hurtbox.host = self
+	hurtbox.stand_size = Vector2(12, 26)
+	hurtbox.crouch_size = Vector2(14, 13)
+	hurtbox.air_size = Vector2(11, 22)
+	hurtbox.feet_y = WORLD_FEET
+	add_child(hurtbox)
+
+
+func _apply_pose_boxes() -> void:
+	var world_size := WORLD_STAND
+	var pose := ArcadeHitbox.Pose.STAND
+	if locked and anim.animation == "death":
+		world_size = Vector2(18, 10)
+		pose = ArcadeHitbox.Pose.DEAD
+	elif crouching and is_on_floor():
+		world_size = WORLD_CROUCH
+		pose = ArcadeHitbox.Pose.CROUCH
+	elif not is_on_floor():
+		pose = ArcadeHitbox.Pose.AIR
+	var world := col.shape as RectangleShape2D
+	if world:
+		world.size = world_size
+	col.position.y = WORLD_FEET - world_size.y * 0.5
+	if hurtbox:
+		hurtbox.set_pose(pose)
+
+
+func _melee_aabb() -> Rect2:
+	var origin := global_position
+	var w := 36.0 * BODY_SCALE
+	var h := 28.0 * BODY_SCALE
+	var x := origin.x + (8.0 * BODY_SCALE if facing > 0 else -w - 8.0 * BODY_SCALE)
+	var y := origin.y - 18.0 * BODY_SCALE
+	if crouching:
+		h = 16.0 * BODY_SCALE
+		y = origin.y - 2.0 * BODY_SCALE
+	return Rect2(x, y, w, h)
+
+
 func _physics_process(delta: float) -> void:
 	if GameState.paused_by_dialog or locked:
 		velocity.x = 0.0
 		if not is_on_floor():
 			velocity.y += GRAVITY * delta
 		move_and_slide()
+		_apply_pose_boxes()
 		if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
 			_run_capture()
 		return
@@ -106,17 +164,10 @@ func _physics_process(delta: float) -> void:
 		facing = 1 if x > 0.0 else -1
 		anim.flip_h = facing < 0
 	if crouching:
-		var crouch_shape := col.shape as RectangleShape2D
-		if crouch_shape:
-			crouch_shape.size = Vector2(18, 26)
-		col.position.y = 8
 		velocity.x = x * SPEED * 0.48
 	else:
-		var stand_shape := col.shape as RectangleShape2D
-		if stand_shape:
-			stand_shape.size = Vector2(18, 42)
-		col.position.y = 0
 		velocity.x = x * SPEED
+	_apply_pose_boxes()
 
 	if Input.is_action_just_pressed(_ia("jump")) and is_on_floor() and not crouching:
 		velocity.y = JUMP_VELOCITY
@@ -134,6 +185,7 @@ func _physics_process(delta: float) -> void:
 		_try_attack()
 
 	_play_anim(x)
+	_apply_pose_boxes()
 	move_and_slide()
 	_clamp_camera_left()
 	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
@@ -434,14 +486,11 @@ func _try_attack() -> void:
 
 
 func _enemy_in_melee() -> bool:
-	var reach := 48.0
-	for e in get_tree().get_nodes_in_group("enemies"):
-		if e == null or not is_instance_valid(e):
+	var box := _melee_aabb()
+	for h in get_tree().get_nodes_in_group("hurtbox_enemy"):
+		if h == null or not is_instance_valid(h):
 			continue
-		var d: Vector2 = (e as Node2D).global_position - global_position
-		if absf(d.y) > 38.0:
-			continue
-		if absf(d.x) <= reach and (signf(d.x) == float(facing) or absf(d.x) < 30.0):
+		if ArcadeHitbox.overlap(box, h.aabb()):
 			return true
 	return false
 
@@ -453,15 +502,13 @@ func _do_melee() -> void:
 	else:
 		var key := "melee_%s" % GameState.current_weapon
 		anim.play(key if anim.sprite_frames.has_animation(key) else "melee")
-	var reach := 50.0
-	for e in get_tree().get_nodes_in_group("enemies"):
-		if e == null or not is_instance_valid(e) or not e.has_method("take_hit"):
+	var box := _melee_aabb()
+	var dmg := 4 if rage_t > 0.0 else 3
+	for h in get_tree().get_nodes_in_group("hurtbox_enemy"):
+		if h == null or not is_instance_valid(h):
 			continue
-		var d: Vector2 = (e as Node2D).global_position - global_position
-		if absf(d.y) > 38.0:
-			continue
-		if absf(d.x) <= reach and (signf(d.x) == float(facing) or absf(d.x) < 30.0):
-			e.take_hit(4 if rage_t > 0.0 else 3, Vector2(facing * 200, -50))
+		if ArcadeHitbox.overlap(box, h.aabb()):
+			h.receive_hit(dmg, Vector2(facing * 200, -50))
 
 
 func _shoot() -> void:
@@ -660,7 +707,26 @@ func _drop_heavy_weapon() -> void:
 	get_tree().current_scene.add_child(p)
 
 
+func _resolve_motion(x: float) -> int:
+	if locked or (anim.animation == "death" and anim.is_playing()):
+		return ArcadeMotion.State.DEAD
+	if melee_t > 0.0 or grenade_t > 0.0:
+		return ArcadeMotion.State.ATTACK
+	if anim.animation == "hurt" and anim.is_playing():
+		return ArcadeMotion.State.HURT
+	if rage_t > 0.0:
+		return ArcadeMotion.State.RAGE
+	if not is_on_floor():
+		return ArcadeMotion.State.AIR
+	if crouching:
+		return ArcadeMotion.State.CROUCH
+	if absf(x) > 0.1:
+		return ArcadeMotion.State.RUN
+	return ArcadeMotion.State.IDLE
+
+
 func _play_anim(x: float) -> void:
+	motion = _resolve_motion(x)
 	if grenade_t > 0.0 or melee_t > 0.0 or (anim.animation in ["hurt", "death"] and anim.is_playing()):
 		return
 	if is_on_floor() and abs(x) > 0.1:

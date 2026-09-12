@@ -31,6 +31,8 @@ window/vsync/vsync_mode=1
 2d_physics/layer_4="player_shots"
 2d_physics/layer_5="enemy_shots"
 2d_physics/layer_6="pickups"
+2d_physics/layer_7="player_hurt"
+2d_physics/layer_8="enemy_hurt"
 
 [rendering]
 textures/canvas_textures/default_texture_filter=0
