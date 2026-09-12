@@ -37,9 +37,9 @@ python3 tools/slice_kiko_sheet.py
 | Andar / mirar 8 direções | A D W S ou setas |
 | Agachar | S (no chão) |
 | Pular | Espaço / Z |
-| Atirar (faca automática perto do inimigo) | J / X |
+| Atirar (golpe pesado se o inimigo estiver perto) | J / X |
 | Granada | G / C |
-| Trocar arma | Q / Tab |
+| Trocar arma (revólver / metralhadora / espingarda) | Q / Tab |
 | Rage | R / Shift |
 
 ## Fonte da verdade
