@@ -10,6 +10,8 @@ No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
 O SmartScreen do Windows pode avisar (o `.exe` não é assinado): **Mais informações → Executar assim mesmo**.
 
+Na abertura: **Enter**, **Espaço** ou **clique** começa a Fase 1. Também há botões **1 JOGADOR**, **2 JOGADORES** e **OPÇÕES**.
+
 ## Arte
 
 O personagem usa a **sprite sheet de pixel art** em `assets/sprites/kiko_sheet.jpg` (andar, tiro, rage, pulo, golpe, dano, morte).

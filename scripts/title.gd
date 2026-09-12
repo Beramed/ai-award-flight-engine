@@ -7,6 +7,7 @@ var blink := 0.0
 var menu_index := 0
 var waiting_bind := ""
 var _capture_frames := 0
+var _starting := false
 
 @onready var poster: TextureRect = $Poster
 @onready var press_start: Label = $PressStart
@@ -28,6 +29,7 @@ var _capture_frames := 0
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	GameState.waiting_rebind = ""
 	poster.texture = load("res://assets/ui/title_poster.png")
 	crest.texture = load("res://assets/ui/options_crest.jpg")
@@ -45,9 +47,20 @@ func _ready() -> void:
 	shoot_btn.pressed.connect(func(): _begin_bind("shoot"))
 	jump_btn.pressed.connect(func(): _begin_bind("jump"))
 	special_btn.pressed.connect(func(): _begin_bind("rage"))
+	$PressCatch.focus_mode = Control.FOCUS_NONE
 	$PressCatch.pressed.connect(_on_press_start)
 	_show(Screen.PRESS_START)
 	_refresh_options()
+	if OS.get_environment("KIKO_TEST_START") == "1":
+		_start_game(1)
+	elif OS.get_environment("KIKO_TEST_ENTER") == "1":
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var ev := InputEventKey.new()
+		ev.pressed = true
+		ev.keycode = KEY_ENTER
+		ev.physical_keycode = KEY_ENTER
+		_input(ev)
 
 
 func _process(delta: float) -> void:
@@ -64,53 +77,80 @@ func _process(delta: float) -> void:
 			)
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
+	if _starting:
+		return
 	if GameState.waiting_rebind != "" and event is InputEventKey and event.pressed and not event.echo:
 		GameState.rebind(GameState.waiting_rebind, event)
 		_refresh_options()
 		get_viewport().set_input_as_handled()
 		return
-	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE):
+	if _is_cancel(event):
 		if screen == Screen.OPTIONS:
 			_close_options()
 		elif screen == Screen.MAIN_MENU:
 			_show(Screen.PRESS_START)
 		get_viewport().set_input_as_handled()
 		return
-	if screen == Screen.PRESS_START and (event.is_action_pressed("ui_start") or event.is_action_pressed("confirm") or event.is_action_pressed("ui_accept")):
-		_on_press_start()
+	if screen == Screen.PRESS_START and _is_confirm(event):
+		_start_game(1)
 		get_viewport().set_input_as_handled()
 		return
-	if screen == Screen.MAIN_MENU:
-		if event.is_action_pressed("ui_start") or event.is_action_pressed("confirm") or event.is_action_pressed("ui_accept"):
-			_activate_menu()
-			get_viewport().set_input_as_handled()
-		elif event.is_action_pressed("ui_down") or event.is_action_pressed("aim_down"):
+	if screen == Screen.MAIN_MENU and _is_confirm(event):
+		_activate_menu()
+		get_viewport().set_input_as_handled()
+		return
+	if screen == Screen.MAIN_MENU and event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode in [KEY_S, KEY_DOWN]:
 			menu_index = (menu_index + 1) % 3
 			_highlight_menu()
 			get_viewport().set_input_as_handled()
-		elif event.is_action_pressed("ui_up") or event.is_action_pressed("aim_up"):
+		elif event.physical_keycode in [KEY_W, KEY_UP]:
 			menu_index = (menu_index + 2) % 3
 			_highlight_menu()
 			get_viewport().set_input_as_handled()
+		elif event.physical_keycode == KEY_2:
+			_start_game(2)
+			get_viewport().set_input_as_handled()
+
+
+func _is_confirm(event: InputEvent) -> bool:
+	if event is InputEventKey and event.pressed and not event.echo:
+		return event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE, KEY_Z] \
+			or event.physical_keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE, KEY_Z]
+	if event is InputEventJoypadButton and event.pressed:
+		return event.button_index in [JOY_BUTTON_START, JOY_BUTTON_A]
+	return false
+
+
+func _is_cancel(event: InputEvent) -> bool:
+	if event is InputEventKey and event.pressed and not event.echo:
+		return event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE
+	if event is InputEventJoypadButton and event.pressed:
+		return event.button_index == JOY_BUTTON_BACK
+	return false
 
 
 func _on_press_start() -> void:
-	if screen != Screen.PRESS_START:
+	if _starting:
 		return
-	_show(Screen.MAIN_MENU)
+	if screen == Screen.PRESS_START:
+		_start_game(1)
 
 
 func _show(which: int) -> void:
 	screen = which
 	press_start.visible = which == Screen.PRESS_START
 	$PressCatch.visible = which == Screen.PRESS_START
-	menu.visible = which == Screen.MAIN_MENU
+	$PressCatch.disabled = which != Screen.PRESS_START
+	$PressCatch.focus_mode = Control.FOCUS_NONE
+	menu.visible = which != Screen.OPTIONS
 	options.visible = which == Screen.OPTIONS
 	poster.visible = which != Screen.OPTIONS
 	if which == Screen.MAIN_MENU:
 		menu_index = 0
 		_highlight_menu()
+		btn_1p.grab_focus()
 	if which == Screen.OPTIONS:
 		_refresh_options()
 
@@ -119,6 +159,8 @@ func _highlight_menu() -> void:
 	var buttons := [btn_1p, btn_2p, btn_opt]
 	for i in buttons.size():
 		buttons[i].modulate = Color(1.15, 0.95, 0.35) if i == menu_index else Color.WHITE
+		if i == menu_index:
+			buttons[i].grab_focus()
 
 
 func _activate_menu() -> void:
@@ -132,9 +174,12 @@ func _activate_menu() -> void:
 
 
 func _start_game(count: int) -> void:
+	if _starting:
+		return
+	_starting = true
 	GameState.player_count = count
 	GameState.reset_run()
-	get_tree().change_scene_to_file("res://scenes/stage_1.tscn")
+	get_tree().change_scene_to_file.call_deferred("res://scenes/stage_1.tscn")
 
 
 func _open_options() -> void:
