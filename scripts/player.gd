@@ -19,6 +19,7 @@ var rage_t := 0.0
 var crouching := false
 var locked := false
 var spawn_point := Vector2.ZERO
+var _capture_frames := 0
 
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var col: CollisionShape2D = $Collision
@@ -39,11 +40,6 @@ func _ready() -> void:
 	anim.sprite_frames = SpriteLib.kiko_frames()
 	anim.play("idle")
 	anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	if OS.get_environment("KIKO_CAPTURE") != "":
-		await get_tree().create_timer(0.45).timeout
-		get_viewport().get_texture().get_image().save_png(
-			OS.get_environment("KIKO_CAPTURE") + "/stage_kiko_sprite.png"
-		)
 
 
 func _ia(action: String) -> String:
@@ -114,6 +110,15 @@ func _physics_process(delta: float) -> void:
 		muzzle.position = Vector2(10 * facing, -36)
 	$Melee/CollisionShape2D.position.x = 24 * facing
 	$Melee/CollisionShape2D.position.y = -8
+	if OS.get_environment("KIKO_CAPTURE") != "":
+		_capture_frames += 1
+		if _capture_frames < 24:
+			velocity.x = SPEED
+			anim.play("walk")
+		if _capture_frames == 24:
+			get_viewport().get_texture().get_image().save_png(
+				OS.get_environment("KIKO_CAPTURE") + "/stage_kiko_sprite.png"
+			)
 
 
 func _update_aim() -> void:
