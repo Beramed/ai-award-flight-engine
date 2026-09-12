@@ -9,7 +9,7 @@ if exist "%~dp0dist\pc\KikoWildFuryMatajava.exe" (
   exit /b 0
 )
 echo.
-echo  Baixe o executavel:
-echo  dist\pc\KikoWildFuryMatajava.exe
+echo  O jogo e o arquivo KikoWildFuryMatajava.exe nesta pasta.
+echo  Clique duas vezes nele. Este .bat nao e necessario.
 echo.
 pause

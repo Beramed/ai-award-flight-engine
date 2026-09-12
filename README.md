@@ -2,11 +2,11 @@
 
 ## Jogar no Windows (executável)
 
-Não precisa do Godot. Baixe e dê dois cliques:
+Não precisa do Godot nem do `.bat`. Baixe este arquivo e dê **dois cliques**:
 
-**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/megadrive-rom-44a0/dist/pc/KikoWildFuryMatajava.exe**
+**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/megadrive-rom-44a0/KikoWildFuryMatajava.exe**
 
-Arquivo no repo: `dist/pc/KikoWildFuryMatajava.exe`
+No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
 O SmartScreen do Windows pode avisar (o `.exe` não é assinado): **Mais informações → Executar assim mesmo**.
 

@@ -3,6 +3,8 @@
 *.translation
 export.cfg
 .import/
+*.import
+*.uid
 *.tmp
 
 # OS

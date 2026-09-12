@@ -1,0 +1,10 @@
+Kiko: Wild Fury - Matajava  (Windows)
+
+Clique duas vezes neste arquivo:
+
+  KikoWildFuryMatajava.exe
+
+Nao precisa do Godot. Nao precisa do JOGAR.bat.
+
+Se o Windows SmartScreen avisar:
+  Mais informacoes  ->  Executar assim mesmo

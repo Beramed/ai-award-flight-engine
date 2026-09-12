@@ -1,7 +1,5 @@
-Kiko: Wild Fury - Matajava (Windows)
+O executavel do jogo esta na pasta principal do projeto:
 
-Clique duas vezes em KikoWildFuryMatajava.exe
+  KikoWildFuryMatajava.exe
 
-Nao precisa do Godot nem do JOGAR.bat.
-O Windows Defender / SmartScreen pode avisar porque o .exe nao tem assinatura:
-Mais informacoes -> Executar assim mesmo.
+Clique duas vezes nele. Nao use o JOGAR.bat.
