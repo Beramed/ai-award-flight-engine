@@ -21,7 +21,7 @@ var loot_kind := ""
 var entering := false
 var entry_target_x := 0.0
 var ferry := false
-var cargo: CargoCrate
+var cargo = null
 var hit_flash := 0.0
 
 @onready var anim: AnimatedSprite2D = $Anim
@@ -57,6 +57,7 @@ func setup(p_id: String, p_facing: int = -1) -> void:
 			shape.size = Vector2(22, 16)
 		col.position.y = 0
 		hover_y = global_position.y
+		z_index = 8
 		anim.play("fly")
 		if kind == "drone":
 			ferry = true

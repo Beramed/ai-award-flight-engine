@@ -280,7 +280,7 @@ func _run_feature_capture() -> bool:
 		Input.action_press(_ia("shoot"))
 		GameState.current_weapon = "pistola"
 	elif f == 18:
-		get_viewport().get_texture().get_image().save_png(cap + "/combat_shoot_down.png")
+		get_viewport().get_texture().get_image().save_png(cap + "/combat_crouch_down.png")
 	elif f == 22:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_crouch_walk.png")
 		Input.action_release(_ia("move_right"))
@@ -289,14 +289,14 @@ func _run_feature_capture() -> bool:
 		_spawn_capture_enemy("drone_carga", Vector2(80, -90), -1)
 		_spawn_capture_enemy("javali_investida", Vector2(110, 0), -1)
 		_spawn_capture_enemy("passaro_pedra", Vector2(140, -100), -1)
-	elif f == 80:
+	elif f == 110:
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_edge_spawn.png")
 		for node in get_tree().get_nodes_in_group("enemies"):
 			node.queue_free()
 		var shop := get_tree().get_first_node_in_group("shop_ui")
 		if shop and shop.has_method("force_open"):
 			shop.force_open()
-	elif f == 96:
+	elif f == 126:
 		get_viewport().get_texture().get_image().save_png(cap + "/shop_mineiro.png")
 		var shop2 := get_tree().get_first_node_in_group("shop_ui")
 		if shop2 and shop2.has_method("close"):
@@ -304,7 +304,7 @@ func _run_feature_capture() -> bool:
 		global_position = spawn_point
 		_feature_capture_done = true
 		_capture_frames = 0
-	return not _feature_capture_done or f <= 96
+	return not _feature_capture_done or f <= 126
 
 
 func ground_y_ref() -> float:

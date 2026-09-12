@@ -47,7 +47,7 @@ func make_sprite_frames(folder: String, mapping: Dictionary, speed := 10.0) -> S
 		var count: int = mapping[anim].get("count", 8)
 		var texs := frames(folder, anim, count)
 		if texs.is_empty() and mapping[anim].has("fallback"):
-			texs = frames(folder, mapping[anim]["fallback"], 4)
+			texs = frames(folder, mapping[anim]["fallback"], count)
 		for t in texs:
 			sf.add_frame(anim, t)
 		if texs.is_empty():
@@ -59,7 +59,7 @@ func kiko_frames() -> SpriteFrames:
 	return make_sprite_frames("kiko", {
 		"idle": {"count": 12, "speed": 5.0},
 		"walk": {"count": 16, "speed": 11.0},
-		"run": {"count": 16, "speed": 14.0},
+		"run": {"count": 16, "speed": 14.0, "fallback": "walk"},
 		"jump": {"count": 10, "speed": 10.0},
 		"jump_start": {"count": 8, "speed": 12.0, "loop": false},
 		"jump_up": {"count": 8, "speed": 10.0},
@@ -73,7 +73,7 @@ func kiko_frames() -> SpriteFrames:
 		"crouch_to_stand": {"count": 8, "speed": 14.0, "loop": false},
 		"crouch_shoot": {"count": 8, "speed": 10.0},
 		"shoot": {"count": 16, "speed": 10.0},
-		"shoot_horizontal": {"count": 16, "speed": 10.0},
+		"shoot_horizontal": {"count": 16, "speed": 10.0, "fallback": "shoot"},
 		"shoot_up": {"count": 8, "speed": 12.0},
 		"shoot_diag": {"count": 8, "speed": 12.0},
 		"shoot_diag_down": {"count": 10, "speed": 12.0},
@@ -94,7 +94,7 @@ func kiko_frames() -> SpriteFrames:
 		"melee_doze": {"count": 6, "speed": 10.0, "loop": false},
 		"rage": {"count": 10, "speed": 10.0},
 		"hurt": {"count": 8, "loop": false, "speed": 8.0},
-		"hit": {"count": 8, "loop": false, "speed": 8.0},
+		"hit": {"count": 8, "loop": false, "speed": 8.0, "fallback": "hurt"},
 		"death": {"count": 8, "loop": false, "speed": 4.0},
 		"climb": {"count": 12, "loop": true, "speed": 8.0},
 		"victory": {"count": 4, "loop": true, "speed": 2.0},
@@ -107,15 +107,15 @@ func javali_frames() -> SpriteFrames:
 		"idle": {"count": 8, "speed": 5.0},
 		"walk": {"count": 16, "speed": 9.0},
 		"run": {"count": 32, "speed": 12.0},
-		"charge": {"count": 32, "speed": 14.0},
+		"charge": {"count": 32, "speed": 14.0, "fallback": "run"},
 		"throw": {"count": 16, "speed": 10.0},
-		"attack": {"count": 16, "speed": 10.0},
+		"attack": {"count": 16, "speed": 10.0, "fallback": "throw"},
 		"jump": {"count": 8, "speed": 8.0},
 		"hit": {"count": 6, "loop": false, "speed": 10.0},
 		"die": {"count": 16, "loop": false, "speed": 10.0},
-		"die_forward": {"count": 16, "loop": false, "speed": 12.0},
-		"die_flip": {"count": 16, "loop": false, "speed": 12.0},
-		"death": {"count": 16, "loop": false, "speed": 10.0},
+		"die_forward": {"count": 16, "loop": false, "speed": 12.0, "fallback": "die"},
+		"die_flip": {"count": 16, "loop": false, "speed": 12.0, "fallback": "die"},
+		"death": {"count": 16, "loop": false, "speed": 10.0, "fallback": "die"},
 		"blindado": {"count": 8, "speed": 8.0},
 		"boss_idle": {"count": 4, "speed": 4.0},
 		"boss_charge": {"count": 8, "speed": 10.0},
@@ -126,28 +126,28 @@ func javali_frames() -> SpriteFrames:
 func passaro_frames() -> SpriteFrames:
 	return make_sprite_frames("passaro", {
 		"idle": {"count": 8, "speed": 6.0},
-		"walk": {"count": 32, "speed": 12.0},
-		"run": {"count": 32, "speed": 16.0},
+		"walk": {"count": 32, "speed": 12.0, "fallback": "fly"},
+		"run": {"count": 32, "speed": 16.0, "fallback": "fly"},
 		"fly": {"count": 32, "speed": 12.0},
 		"drop": {"count": 20, "speed": 12.0, "loop": false},
-		"attack": {"count": 20, "speed": 12.0, "loop": false},
+		"attack": {"count": 20, "speed": 12.0, "loop": false, "fallback": "drop"},
 		"hit": {"count": 6, "loop": false, "speed": 10.0},
 		"die": {"count": 8, "loop": false, "speed": 8.0},
-		"death": {"count": 8, "loop": false, "speed": 8.0},
+		"death": {"count": 8, "loop": false, "speed": 8.0, "fallback": "die"},
 	})
 
 
 func drone_frames() -> SpriteFrames:
 	return make_sprite_frames("drone", {
 		"idle": {"count": 8, "speed": 8.0},
-		"walk": {"count": 16, "speed": 10.0},
-		"run": {"count": 16, "speed": 12.0},
+		"walk": {"count": 16, "speed": 10.0, "fallback": "fly"},
+		"run": {"count": 16, "speed": 12.0, "fallback": "fly"},
 		"fly": {"count": 16, "speed": 10.0},
 		"drop": {"count": 12, "speed": 10.0, "loop": false},
-		"attack": {"count": 12, "speed": 10.0, "loop": false},
+		"attack": {"count": 12, "speed": 10.0, "loop": false, "fallback": "drop"},
 		"hit": {"count": 6, "loop": false, "speed": 10.0},
 		"die": {"count": 8, "loop": false, "speed": 8.0},
-		"death": {"count": 8, "loop": false, "speed": 8.0},
+		"death": {"count": 8, "loop": false, "speed": 8.0, "fallback": "die"},
 	})
 
 

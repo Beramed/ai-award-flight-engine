@@ -42,7 +42,7 @@ const INIMIGOS := {
 	},
 	"drone_carga": {
 		"hp": 2, "speed": 70.0, "touch": 1, "score": 220,
-		"kind": "drone", "airborne": true, "scale": 0.95,
+		"kind": "drone", "airborne": true, "scale": 1.35,
 	},
 	"bufalo_lamacal": {
 		"hp": 10, "speed": 80.0, "touch": 1, "score": 300,
