@@ -12,8 +12,8 @@ var dead := false
 var attack_cd := 0.0
 var armored := false
 var airborne := false
-var phase := "move"
-var phase_t := 0.0
+var ai_phase := "move"
+var ai_t := 0.0
 var hover_y := 0.0
 var touch_dmg := 1
 
@@ -63,7 +63,7 @@ func _physics_process(delta: float) -> void:
 	if dead or GameState.paused_by_dialog:
 		return
 	attack_cd = max(0.0, attack_cd - delta)
-	phase_t = max(0.0, phase_t - delta)
+	ai_t = max(0.0, ai_t - delta)
 	if airborne:
 		_ai_air(delta)
 		move_and_slide()
@@ -93,23 +93,23 @@ func _ai_charger() -> void:
 	if player:
 		facing = 1 if player.global_position.x > global_position.x else -1
 	anim.flip_h = facing < 0
-	if phase == "charge":
+	if ai_phase == "charge":
 		velocity.x = facing * speed * 2.35
 		anim.play("charge")
-		if phase_t <= 0.0:
-			phase = "recover"
-			phase_t = 0.45
+		if ai_t <= 0.0:
+			ai_phase = "recover"
+			ai_t = 0.45
 		return
-	if phase == "recover":
+	if ai_phase == "recover":
 		velocity.x = facing * speed * 0.35
-		if phase_t <= 0.0:
-			phase = "move"
+		if ai_t <= 0.0:
+			ai_phase = "move"
 		return
 	velocity.x = facing * speed
 	anim.play("run" if anim.sprite_frames.has_animation("run") else "charge")
 	if player and abs(player.global_position.x - global_position.x) < 110.0 and attack_cd <= 0.0:
-		phase = "charge"
-		phase_t = 0.48
+		ai_phase = "charge"
+		ai_t = 0.48
 		attack_cd = 1.35
 
 
@@ -118,14 +118,14 @@ func _ai_thrower() -> void:
 	if player:
 		facing = 1 if player.global_position.x > global_position.x else -1
 	anim.flip_h = facing < 0
-	if phase == "throw":
+	if ai_phase == "throw":
 		velocity.x = 0.0
 		anim.play("throw")
-		if phase_t <= 0.22 and attack_cd <= 0.05:
+		if ai_t <= 0.22 and attack_cd <= 0.05:
 			_spawn_rock(Vector2(facing * 120.0, -210.0))
 			attack_cd = 1.6
-		if phase_t <= 0.0:
-			phase = "move"
+		if ai_t <= 0.0:
+			ai_phase = "move"
 		return
 	var dist := 999.0
 	if player:
@@ -137,8 +137,8 @@ func _ai_thrower() -> void:
 	else:
 		velocity.x = 0.0
 		if attack_cd <= 0.0:
-			phase = "throw"
-			phase_t = 0.55
+			ai_phase = "throw"
+			ai_t = 0.55
 	if velocity.x != 0.0:
 		anim.play("throw")
 
@@ -174,19 +174,19 @@ func _ai_air(delta: float) -> void:
 	global_position.y = lerp(global_position.y, hover_y + sin(Time.get_ticks_msec() * 0.004) * 6.0, 0.2)
 	velocity.y = 0.0
 	anim.flip_h = facing < 0
-	if phase == "drop":
+	if ai_phase == "drop":
 		anim.play("drop")
-		if phase_t <= 0.18 and attack_cd <= 0.04:
+		if ai_t <= 0.18 and attack_cd <= 0.04:
 			if kind == "bird":
 				_spawn_rock(Vector2(0.0, 40.0))
 			attack_cd = 1.7
-		if phase_t <= 0.0:
-			phase = "move"
+		if ai_t <= 0.0:
+			ai_phase = "move"
 		return
 	anim.play("fly")
 	if kind == "bird" and attack_cd <= 0.0:
-		phase = "drop"
-		phase_t = 0.5
+		ai_phase = "drop"
+		ai_t = 0.5
 
 
 func _spawn_rock(impulse: Vector2) -> void:

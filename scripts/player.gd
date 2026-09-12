@@ -151,6 +151,8 @@ func _run_capture() -> void:
 			GameState.score = 24500
 			GameState.score_changed.emit(GameState.score)
 			GameState.add_rage(80.0)
+		if _capture_frames == 15:
+			get_viewport().get_texture().get_image().save_png(cap + "/combat_walk.png")
 	elif _capture_frames == 16:
 		get_viewport().get_texture().get_image().save_png(cap + "/hud_arcade.png")
 		get_viewport().get_texture().get_image().save_png(cap + "/combat_walk.png")
