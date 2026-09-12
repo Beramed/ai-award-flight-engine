@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/title.gd" id="1_title"]
+[ext_resource type="Texture2D" path="res://assets/ui/title_poster.png" id="2_poster"]
 
 [node name="Title" type="Control"]
 layout_mode = 3
@@ -11,79 +12,235 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_title")
 
-[node name="Bg" type="ColorRect" parent="."]
+[node name="Poster" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.043, 0.063, 0.125, 1)
-
-[node name="Art" type="TextureRect" parent="."]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -170.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = 262.0
+texture = ExtResource("2_poster")
 expand_mode = 1
 stretch_mode = 6
-modulate = Color(1, 1, 1, 0.85)
+mouse_filter = 2
 
-[node name="TitleLabel" type="Label" parent="."]
+[node name="PressCatch" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="PressStart" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -140.0
+offset_top = -36.0
+offset_right = 140.0
+offset_bottom = -8.0
+theme_override_colors/font_color = Color(1, 0.86, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 16
+text = "PRESS START"
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Menu" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -90.0
+offset_top = -92.0
+offset_right = 90.0
+offset_bottom = -8.0
+theme_override_constants/separation = 4
+
+[node name="Btn1P" type="Button" parent="Menu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "1 PLAYER"
+
+[node name="Btn2P" type="Button" parent="Menu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "2 PLAYERS"
+
+[node name="BtnOpt" type="Button" parent="Menu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "OPTIONS"
+
+[node name="Options" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Options"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.05, 0.03, 0.72)
+mouse_filter = 2
+
+[node name="Crest" type="TextureRect" parent="Options"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -80.0
-offset_right = 200.0
-offset_bottom = -48.0
-theme_override_font_sizes/font_size = 22
-theme_override_colors/font_color = Color(0.95, 0.82, 0.35, 1)
-text = "KIKO: WILD FURY"
+offset_left = -90.0
+offset_top = -98.0
+offset_right = 90.0
+offset_bottom = 82.0
+expand_mode = 1
+stretch_mode = 5
+modulate = Color(1, 1, 1, 0.55)
+mouse_filter = 2
+
+[node name="Panel" type="VBoxContainer" parent="Options"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -120.0
+offset_right = 210.0
+offset_bottom = 122.0
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Options/Panel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.78, 0.22, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 16
+text = "OPTIONS"
 horizontal_alignment = 1
 
-[node name="Sub" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -46.0
-offset_right = 200.0
-offset_bottom = -28.0
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.85, 0.35, 0.28, 1)
-text = "MATAJAVA"
-horizontal_alignment = 1
+[node name="DiffRow" type="HBoxContainer" parent="Options/Panel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
 
-[node name="Hint" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -220.0
-offset_top = 8.0
-offset_right = 220.0
-offset_bottom = 90.0
+[node name="Easy" type="Button" parent="Options/Panel/DiffRow"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 11
-theme_override_colors/font_color = Color(0.86, 0.86, 0.8, 1)
-text = "FASE 1 — A FAZENDA TOMADA
+text = "EASY"
 
-A/D ou setas — andar e mirar 8 direções
-W — mirar cima    S — agachar
-ESPAÇO/Z — pular    J/X — atirar (faca automática)
-G/C — granada    Q — trocar arma    R — RAGE
+[node name="Medium" type="Button" parent="Options/Panel/DiffRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "MEDIUM"
 
-ENTER / Z / J — começar"
+[node name="Hard" type="Button" parent="Options/Panel/DiffRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "HARD"
+
+[node name="LivesRow" type="HBoxContainer" parent="Options/Panel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Options/Panel/LivesRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "VIDAS"
+
+[node name="Minus" type="Button" parent="Options/Panel/LivesRow"]
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+text = "-"
+
+[node name="Value" type="Label" parent="Options/Panel/LivesRow"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "3"
 horizontal_alignment = 1
+
+[node name="Plus" type="Button" parent="Options/Panel/LivesRow"]
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+text = "+"
+
+[node name="ContinuesRow" type="HBoxContainer" parent="Options/Panel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Options/Panel/ContinuesRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "CONTINUES"
+
+[node name="Minus" type="Button" parent="Options/Panel/ContinuesRow"]
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+text = "-"
+
+[node name="Value" type="Label" parent="Options/Panel/ContinuesRow"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "3"
+horizontal_alignment = 1
+
+[node name="Plus" type="Button" parent="Options/Panel/ContinuesRow"]
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+text = "+"
+
+[node name="Binds" type="HBoxContainer" parent="Options/Panel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="Shoot" type="Button" parent="Options/Panel/Binds"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "TIRO  [J]"
+
+[node name="Jump" type="Button" parent="Options/Panel/Binds"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "PULO  [SPACE]"
+
+[node name="Special" type="Button" parent="Options/Panel/Binds"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "ESPECIAL  [R]"
+
+[node name="BindHint" type="Label" parent="Options/Panel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.55, 1)
+theme_override_font_sizes/font_size = 9
+text = "Clique no botão e pressione a tecla nova"
+horizontal_alignment = 1
+
+[node name="Back" type="Button" parent="Options/Panel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "VOLTAR"

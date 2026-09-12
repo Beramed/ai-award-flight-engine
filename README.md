@@ -1,9 +1,6 @@
 # Kiko: Wild Fury - Matajava
 
-Run and gun 2D em Godot 4, estilo Metal Slug / Contra.
-
-Repositório pretendido: **`kiko-wild-fury-matajava`**
-Título: **Kiko: Wild Fury - Matajava**
+Projeto Godot 4 próprio (run and gun estilo Metal Slug). Esta pasta **é a raiz do jogo** — não fica dentro do `ai-award-flight-engine`.
 
 ## Abrir no Godot
 

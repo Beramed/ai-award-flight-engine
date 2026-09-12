@@ -7,11 +7,18 @@ signal coins_changed(value: int)
 signal rage_changed(value: float, maximum: float)
 signal ammo_changed(id: String, value: int)
 
+enum Difficulty { EASY, MEDIUM, HARD }
+
 const MAX_HP := 8
-const MAX_LIVES := 3
 const MAX_RAGE := 100.0
 
-var lives: int = MAX_LIVES
+var difficulty: int = Difficulty.MEDIUM
+var starting_lives: int = 3
+var max_continues: int = 3
+var continues_left: int = 3
+var player_count: int = 1
+
+var lives: int = 3
 var hp: int = MAX_HP
 var coins: int = 0
 var rage: float = 0.0
@@ -20,6 +27,7 @@ var current_weapon: String = "pistola"
 var grenades: int = 8
 var paused_by_dialog: bool = false
 var stage_cleared: bool = false
+var waiting_rebind: String = ""
 
 var ammo := {
 	"pistola": -1,
@@ -51,7 +59,8 @@ func _ready() -> void:
 
 
 func reset_run() -> void:
-	lives = MAX_LIVES
+	lives = starting_lives
+	continues_left = max_continues
 	hp = MAX_HP
 	coins = 0
 	rage = 20.0
@@ -59,9 +68,68 @@ func reset_run() -> void:
 	has_vest = false
 	current_weapon = "pistola"
 	stage_cleared = false
+	waiting_rebind = ""
 	ammo = {"pistola": -1, "fuzil": 0, "doze": 0, "sniper": 0}
 	owned = {"pistola": true, "fuzil": false, "doze": false, "sniper": false}
 	_emit_all()
+
+
+func difficulty_name() -> String:
+	match difficulty:
+		Difficulty.EASY:
+			return "EASY"
+		Difficulty.HARD:
+			return "HARD"
+		_:
+			return "MEDIUM"
+
+
+func hp_scale() -> float:
+	match difficulty:
+		Difficulty.EASY:
+			return 0.7
+		Difficulty.HARD:
+			return 1.45
+		_:
+			return 1.0
+
+
+func speed_scale() -> float:
+	match difficulty:
+		Difficulty.EASY:
+			return 0.82
+		Difficulty.HARD:
+			return 1.22
+		_:
+			return 1.0
+
+
+func use_continue() -> bool:
+	if continues_left <= 0:
+		return false
+	continues_left -= 1
+	lives = starting_lives
+	hp = MAX_HP
+	lives_changed.emit(lives)
+	hp_changed.emit(hp, MAX_HP)
+	return true
+
+
+func action_key_name(action: String) -> String:
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventKey:
+			return OS.get_keycode_string((ev as InputEventKey).physical_keycode)
+	return "?"
+
+
+func rebind(action: String, event: InputEventKey) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	InputMap.action_erase_events(action)
+	var copy := event.duplicate() as InputEventKey
+	copy.pressed = false
+	InputMap.action_add_event(action, copy)
+	waiting_rebind = ""
 
 
 func give_weapon(id: String, extra_ammo: int = 0) -> void:
@@ -179,7 +247,15 @@ func _bind_actions() -> void:
 	_act("grenade", [KEY_G, KEY_C])
 	_act("weapon_next", [KEY_Q, KEY_TAB])
 	_act("rage", [KEY_R, KEY_SHIFT])
-	_act("confirm", [KEY_ENTER, KEY_SPACE, KEY_Z, KEY_J, KEY_X])
+	_act("confirm", [KEY_ENTER, KEY_SPACE, KEY_Z])
+	_act("ui_start", [KEY_ENTER, KEY_SPACE])
+	_act("p2_move_left", [KEY_LEFT])
+	_act("p2_move_right", [KEY_RIGHT])
+	_act("p2_aim_up", [KEY_UP])
+	_act("p2_aim_down", [KEY_DOWN])
+	_act("p2_jump", [KEY_L])
+	_act("p2_shoot", [KEY_K])
+	_act("p2_rage", [KEY_I])
 
 
 func _act(name: String, keys: Array) -> void:

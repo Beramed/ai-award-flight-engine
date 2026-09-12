@@ -147,6 +147,13 @@ func _spawn_player() -> void:
 	cam.configure(float(data.get("largura", 5600)))
 	player.spawn_point = start
 	player.died.connect(func(): player.spawn_point = Vector2(max(cam.lock_left + 48, start.x), start.y))
+	if GameState.player_count >= 2:
+		var p2: PlayerKiko = preload("res://scenes/player.tscn").instantiate()
+		p2.player_index = 1
+		p2.global_position = start + Vector2(28, 0)
+		add_child(p2)
+		p2.spawn_point = p2.global_position
+		p2.modulate = Color(1.15, 0.92, 0.75)
 
 
 func _spawn_hud() -> void:

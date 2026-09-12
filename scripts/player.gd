@@ -7,6 +7,8 @@ const GRAVITY := 820.0
 
 signal died
 
+@export var player_index := 0
+
 var facing := 1
 var aim := Vector2.RIGHT
 var invuln := 0.0
@@ -26,10 +28,23 @@ var spawn_point := Vector2.ZERO
 
 func _ready() -> void:
 	add_to_group("player")
+	if player_index == 0:
+		add_to_group("player1")
+	else:
+		add_to_group("player2")
+		var cam_node := get_node_or_null("Camera") as Camera2D
+		if cam_node:
+			cam_node.enabled = false
 	spawn_point = global_position
 	anim.sprite_frames = SpriteLib.kiko_frames()
 	anim.play("idle")
 	anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+
+
+func _ia(action: String) -> String:
+	if player_index == 0:
+		return action
+	return "p2_" + action
 
 
 func _physics_process(delta: float) -> void:
@@ -53,8 +68,8 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
 
-	var x := Input.get_axis("move_left", "move_right")
-	crouching = is_on_floor() and Input.is_action_pressed("aim_down")
+	var x := Input.get_axis(_ia("move_left"), _ia("move_right"))
+	crouching = is_on_floor() and Input.is_action_pressed(_ia("aim_down"))
 	if crouching:
 		x = 0.0
 		var crouch_shape := col.shape as RectangleShape2D
@@ -72,18 +87,18 @@ func _physics_process(delta: float) -> void:
 		anim.flip_h = facing < 0
 	velocity.x = x * SPEED
 
-	if Input.is_action_just_pressed("jump") and is_on_floor() and not crouching:
+	if Input.is_action_just_pressed(_ia("jump")) and is_on_floor() and not crouching:
 		velocity.y = JUMP_VELOCITY
 
 	_update_aim()
 
-	if Input.is_action_just_pressed("weapon_next"):
+	if Input.is_action_just_pressed("weapon_next") and player_index == 0:
 		GameState.cycle_weapon()
-	if Input.is_action_just_pressed("rage"):
+	if Input.is_action_just_pressed(_ia("rage")):
 		_try_rage()
-	if Input.is_action_just_pressed("grenade"):
+	if Input.is_action_just_pressed("grenade") and player_index == 0:
 		_throw_grenade()
-	if Input.is_action_pressed("shoot"):
+	if Input.is_action_pressed(_ia("shoot")):
 		_try_attack()
 
 	_play_anim(x)
@@ -96,10 +111,10 @@ func _physics_process(delta: float) -> void:
 
 
 func _update_aim() -> void:
-	var up := Input.is_action_pressed("aim_up")
-	var down := Input.is_action_pressed("aim_down")
-	var left := Input.is_action_pressed("move_left")
-	var right := Input.is_action_pressed("move_right")
+	var up := Input.is_action_pressed(_ia("aim_up"))
+	var down := Input.is_action_pressed(_ia("aim_down"))
+	var left := Input.is_action_pressed(_ia("move_left"))
+	var right := Input.is_action_pressed(_ia("move_right"))
 	aim = Vector2(facing, 0)
 	if up and not down:
 		if left or right:
@@ -207,7 +222,12 @@ func _die() -> void:
 	died.emit()
 	await get_tree().create_timer(1.1).timeout
 	if GameState.lives <= 0:
-		get_tree().reload_current_scene()
+		if GameState.use_continue():
+			global_position = spawn_point
+			locked = false
+			invuln = 1.5
+			return
+		get_tree().change_scene_to_file("res://scenes/title.tscn")
 		return
 	global_position = spawn_point
 	locked = false
@@ -219,14 +239,14 @@ func _die() -> void:
 func _play_anim(x: float) -> void:
 	if melee_t > 0.0 or anim.animation in ["hurt", "death"] and anim.is_playing():
 		return
-	if rage_t > 0.0 and Input.is_action_pressed("shoot"):
+	if rage_t > 0.0 and Input.is_action_pressed(_ia("shoot")):
 		anim.play("rage")
 		return
 	if not is_on_floor():
 		anim.play("jump")
 	elif crouching:
 		anim.play("crouch")
-	elif Input.is_action_pressed("shoot"):
+	elif Input.is_action_pressed(_ia("shoot")):
 		anim.play("shoot_up" if aim.y < -0.5 else "shoot")
 	elif abs(x) > 0.1:
 		anim.play("walk")
