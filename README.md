@@ -4,7 +4,7 @@
 
 Não precisa do Godot nem do `.bat`. Baixe este arquivo e dê **dois cliques**:
 
-**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/arcade-hitboxes-44a0/KikoWildFuryMatajava.exe**
+**https://github.com/Beramed/ai-award-flight-engine/raw/cursor/ms-run-gun-44a0/KikoWildFuryMatajava.exe**
 
 No zip/clone do projeto o arquivo é `KikoWildFuryMatajava.exe` (na raiz).
 
@@ -55,7 +55,7 @@ No meio da fazenda abre o **Armazém do Mineiro** (loja no palco, sem trocar de 
 
 S + atirar no chão dispara **90° para baixo** (agachado). Diagonais continuam diagonais.
 
-Arquitetura arcade (Godot, com os frames do Kiko): **física do chão** (`CharacterBody2D`, só tiles) separada da **caixa de dano** (`ArcadeHitbox`, AABB). Agachar corta a hurtbox pela metade e ancora os pés — tiros altos passam por cima. Tiros testam interseção de retângulos contra o grupo `hurtbox`, não contra o corpo de física. Estados: idle / run / crouch / air / attack / hurt / dead.
+Arquitetura arcade (Godot, com os frames do Kiko): **física do chão** (`CharacterBody2D` + ray de chão tipo OverlapCircle) separada da **caixa de dano** (`ArcadeHitbox`, AABB). Movimento usa aceleração/delta (SFML/Phaser). Agachar corta a hurtbox pela metade. Tiros testam retângulos contra `hurtbox`. Animator: idle / walk / run / crouch (stand_to_crouch) / jump_start-up-fall / landing. Frames curtos ganham intermediários em memória, sem inflar o exe. Inimigos entram pela borda; drones atravessam a tela com caixa.
 
 ## Fonte da verdade
 

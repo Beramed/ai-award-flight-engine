@@ -27,7 +27,7 @@ func _ready() -> void:
 	z_index = 60
 	_ensure_shape()
 	set_pose(Pose.STAND)
-	debug_draw = OS.get_environment("KIKO_HITBOX") == "1" or OS.get_environment("KIKO_CAPTURE") != ""
+	debug_draw = OS.get_environment("KIKO_HITBOX") == "1"
 	queue_redraw()
 
 

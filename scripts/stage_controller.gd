@@ -199,11 +199,15 @@ func _spawn_pack(pack: Array, watch_go := false) -> void:
 			from_right = int(info.get("facing", -1)) <= 0
 		var spawn_x := cam_x + half + margin if from_right else cam_x - half - margin
 		spawn_x = clampf(spawn_x + float(i) * 18.0, -48.0, 5720.0)
-		if player and absf(spawn_x - player.global_position.x) < 90.0:
+		if absf(spawn_x - cam_x) < half + 40.0:
+			spawn_x = cam_x + (half + margin) * (1.0 if from_right else -1.0)
+		if player and absf(spawn_x - player.global_position.x) < 140.0:
 			spawn_x = player.global_position.x + (half + margin) * (1.0 if from_right else -1.0)
 		var enter_facing := -1 if from_right else 1
 		var dest := intended_x
-		if from_right:
+		if kind == "drone":
+			dest = cam_x - half - 80.0 if from_right else cam_x + half + 80.0
+		elif from_right:
 			dest = clampf(intended_x, cam_x + 36.0, cam_x + 170.0)
 		else:
 			dest = clampf(intended_x, cam_x - 170.0, cam_x - 36.0)

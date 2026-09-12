@@ -2,8 +2,13 @@ extends CharacterBody2D
 class_name PlayerKiko
 
 const SPEED := 118.0
+const RUN_SPEED := 148.0
+const ACCEL := 980.0
+const AIR_ACCEL := 640.0
+const FRICTION := 920.0
 const JUMP_VELOCITY := -332.0
 const GRAVITY := 820.0
+const COYOTE := 0.09
 const BODY_SCALE := 0.7
 const WORLD_STAND := Vector2(16, 40)
 const WORLD_CROUCH := Vector2(16, 20)
@@ -30,6 +35,12 @@ var _capture_frames := 0
 var _feature_capture_done := false
 var motion: int = ArcadeMotion.State.IDLE
 var hurtbox: ArcadeHitbox
+var ground_ray: RayCast2D
+var coyote := 0.0
+var trans_anim := ""
+var trans_left := 0.0
+var was_grounded := true
+var was_crouching := false
 
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var col: CollisionShape2D = $Collision
@@ -56,6 +67,7 @@ func _ready() -> void:
 	scale = Vector2(BODY_SCALE, BODY_SCALE)
 	_dup_world_shape()
 	_make_hurtbox()
+	_make_ground_ray()
 	_apply_pose_boxes()
 	if OS.get_environment("KIKO_CAPTURE") != "" or OS.get_environment("KIKO_DEMO") != "":
 		Engine.max_fps = 60
@@ -85,16 +97,33 @@ func _make_hurtbox() -> void:
 	add_child(hurtbox)
 
 
+func _make_ground_ray() -> void:
+	ground_ray = RayCast2D.new()
+	ground_ray.name = "GroundRay"
+	ground_ray.position = Vector2(0, WORLD_FEET)
+	ground_ray.target_position = Vector2(0, 8)
+	ground_ray.collision_mask = 1
+	ground_ray.enabled = true
+	ground_ray.hit_from_inside = true
+	add_child(ground_ray)
+
+
+func _on_ground() -> bool:
+	if is_on_floor():
+		return true
+	return ground_ray != null and ground_ray.is_colliding()
+
+
 func _apply_pose_boxes() -> void:
 	var world_size := WORLD_STAND
 	var pose := ArcadeHitbox.Pose.STAND
 	if locked and anim.animation == "death":
 		world_size = Vector2(18, 10)
 		pose = ArcadeHitbox.Pose.DEAD
-	elif crouching and is_on_floor():
+	elif crouching and _on_ground():
 		world_size = WORLD_CROUCH
 		pose = ArcadeHitbox.Pose.CROUCH
-	elif not is_on_floor():
+	elif not _on_ground():
 		pose = ArcadeHitbox.Pose.AIR
 	var world := col.shape as RectangleShape2D
 	if world:
@@ -148,10 +177,12 @@ func _physics_process(delta: float) -> void:
 	else:
 		modulate = Color(1, 1, 1)
 
-	if not is_on_floor():
+	if not _on_ground():
 		velocity.y += GRAVITY * delta
+		coyote = maxf(0.0, coyote - delta)
 	else:
 		last_ground = global_position
+		coyote = COYOTE
 
 	if global_position.y > 320.0:
 		fall_in_water()
@@ -159,18 +190,42 @@ func _physics_process(delta: float) -> void:
 
 	var x := Input.get_axis(_ia("move_left"), _ia("move_right"))
 	var holding_down := Input.is_action_pressed(_ia("aim_down"))
-	crouching = is_on_floor() and holding_down
+	var grounded := _on_ground()
+	crouching = grounded and holding_down
 	if x != 0.0:
 		facing = 1 if x > 0.0 else -1
 		anim.flip_h = facing < 0
-	if crouching:
-		velocity.x = x * SPEED * 0.48
-	else:
-		velocity.x = x * SPEED
+	var max_speed := SPEED
+	if grounded and not crouching and absf(x) > 0.85:
+		max_speed = RUN_SPEED
+	elif crouching:
+		max_speed = SPEED * 0.48
+	var target := x * max_speed
+	var rate := ACCEL if grounded else AIR_ACCEL
+	if absf(target) < 1.0 and grounded:
+		rate = FRICTION
+	velocity.x = move_toward(velocity.x, target, rate * delta)
 	_apply_pose_boxes()
 
-	if Input.is_action_just_pressed(_ia("jump")) and is_on_floor() and not crouching:
+	if trans_left > 0.0:
+		trans_left = maxf(0.0, trans_left - delta)
+	if crouching and not was_crouching:
+		trans_anim = "stand_to_crouch"
+		trans_left = 0.14
+	elif not crouching and was_crouching and grounded:
+		trans_anim = "crouch_to_stand"
+		trans_left = 0.14
+	if grounded and not was_grounded:
+		trans_anim = "landing"
+		trans_left = 0.12
+	was_crouching = crouching
+	was_grounded = grounded
+
+	if Input.is_action_just_pressed(_ia("jump")) and coyote > 0.0 and not crouching:
 		velocity.y = JUMP_VELOCITY
+		coyote = 0.0
+	if velocity.y < 0.0 and not Input.is_action_pressed(_ia("jump")):
+		velocity.y += GRAVITY * 1.45 * delta
 
 	_update_aim()
 	_update_muzzle()
@@ -545,7 +600,7 @@ func _shoot_anim_name() -> String:
 	if aim.y < -0.25:
 		return "shoot_diag"
 	var weapon := GameState.current_weapon
-	var air := not is_on_floor()
+	var air := not _on_ground()
 	if air:
 		if weapon == "fuzil":
 			return "jump_shoot_fuzil"
@@ -716,7 +771,7 @@ func _resolve_motion(x: float) -> int:
 		return ArcadeMotion.State.HURT
 	if rage_t > 0.0:
 		return ArcadeMotion.State.RAGE
-	if not is_on_floor():
+	if not _on_ground():
 		return ArcadeMotion.State.AIR
 	if crouching:
 		return ArcadeMotion.State.CROUCH
@@ -729,11 +784,16 @@ func _play_anim(x: float) -> void:
 	motion = _resolve_motion(x)
 	if grenade_t > 0.0 or melee_t > 0.0 or (anim.animation in ["hurt", "death"] and anim.is_playing()):
 		return
-	if is_on_floor() and abs(x) > 0.1:
+	if trans_left > 0.0 and trans_anim != "" and not Input.is_action_pressed(_ia("shoot")):
+		if anim.sprite_frames.has_animation(trans_anim):
+			anim.play(trans_anim)
+			anim.flip_h = facing < 0
+			return
+	if _on_ground() and abs(x) > 0.1:
 		if crouching:
 			anim.play("crouch_walk" if anim.sprite_frames.has_animation("crouch_walk") else "crouch")
 		else:
-			anim.play("run" if abs(x) > 0.95 and anim.sprite_frames.has_animation("run") else "walk")
+			anim.play("run" if abs(x) > 0.85 and anim.sprite_frames.has_animation("run") else "walk")
 		anim.flip_h = facing < 0
 		return
 	if rage_t > 0.0 and Input.is_action_pressed(_ia("shoot")):
@@ -757,7 +817,7 @@ func _play_anim(x: float) -> void:
 		anim.play("shoot_diag")
 		anim.frame = 0
 		anim.pause()
-	elif not is_on_floor():
+	elif not _on_ground():
 		if velocity.y < -90.0 and anim.sprite_frames.has_animation("jump_up"):
 			anim.play("jump_up")
 		elif velocity.y > 70.0 and anim.sprite_frames.has_animation("jump_fall"):

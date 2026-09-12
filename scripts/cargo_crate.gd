@@ -47,9 +47,9 @@ func _physics_process(delta: float) -> void:
 		return
 	if attached and host != null and is_instance_valid(host):
 		sway_t += delta
-		position = Vector2(sin(sway_t * 3.2) * 3.5, 20.0 + sin(sway_t * 5.0) * 1.5)
+		position = Vector2(sin(sway_t * 3.2) * 3.5, 22.0 + sin(sway_t * 5.0) * 1.5)
 		if cable:
-			cable.points = PackedVector2Array([Vector2(0, -18), Vector2(0, -2)])
+			cable.points = PackedVector2Array([Vector2(0, -22), Vector2(0, -4)])
 		return
 	velocity.y += GRAVITY * delta
 	move_and_slide()
